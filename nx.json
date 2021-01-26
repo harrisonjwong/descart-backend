@@ -15,5 +15,9 @@
       "options": { "cacheableOperations": ["build", "lint", "test", "e2e"] }
     }
   },
-  "projects": { "backend": { "tags": [] } }
+  "projects": {
+    "backend": { "tags": [] },
+    "data": { "tags": [] },
+    "auth": { "tags": [] }
+  }
 }

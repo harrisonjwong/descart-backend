@@ -14,7 +14,10 @@
     "skipLibCheck": true,
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
-    "paths": {}
+    "paths": {
+      "@backend/data": ["libs/data/src/index.ts"],
+      "@backend/auth": ["libs/auth/src/index.ts"]
+    }
   },
   "exclude": ["node_modules", "tmp"]
 }
