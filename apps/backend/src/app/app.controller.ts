@@ -1,4 +1,5 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, UseGuards } from '@nestjs/common';
+import { JwtAuthGuard } from 'libs/auth/src/lib/jwt-auth.guard';
 
 import { AppService } from './app.service';
 import { ReceiptService } from './receipt/receipt.service';
@@ -10,11 +11,13 @@ export class AppController {
     private readonly receiptService: ReceiptService
   ) {}
 
+  @UseGuards(JwtAuthGuard)
   @Get()
   getData() {
     return this.appService.getData();
   }
 
+  @UseGuards(JwtAuthGuard)
   @Get('/receipts')
   getReceipts() {
     return this.receiptService.getReceipts();
