@@ -1,6 +1,10 @@
 # Backend
 
-Des-Cart is an app for EECE 4792 (Capstone Design 2) with Waleed Meleis, Spring 2021. This repo contains the backend.
+Des-Cart is an purchase tracking and recommendations app created for EECE 4792 (Capstone Design 2) with Waleed Meleis in Spring 2021. This repo contains the backend.
+
+Run the project with `nx serve backend` (which probably requires a `npm install -g nx` or `yarn global add nx` before).
+
+The frontend is here - https://github.com/nickghughes/descart
 
 <!---
 This project was generated using [Nx](https://nx.dev).
