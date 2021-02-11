@@ -46,7 +46,7 @@ export interface FavoriteProduct {
 
 export interface Purchase {
   id: number;
-  purchasedProductIds: [number];
+  purchasedProductIds: number[];
   purchasedAt: Date;
   storeId: number;
   userId: number;
