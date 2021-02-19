@@ -4,23 +4,16 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { ReceiptService } from './receipt/receipt.service';
 import { AuthController, AuthModule } from '@backend/auth';
-import { UserController } from './user/user.controller';
-import { UserService } from './user/user.service';
-import { ProductService } from './product/product.service';
-import { ProductController } from './product/product.controller';
-import { PurchasedProductController } from './purchased-product/purchased-product.controller';
-import { PurchasedProductService } from './purchased-product/purchased-product.service';
-import { StoreService } from './store/store.service';
-import { StoreController } from './store/store.controller';
-import { PurchaseController } from './purchase/purchase.controller';
-import { PurchaseService } from './purchase/purchase.service';
-import { FavoriteProductController } from './favorite-product/favorite-product.controller';
-import { FavoriteProductService } from './favorite-product/favorite-product.service';
-import { ManufacturerController } from './manufacturer/manufacturer.controller';
-import { ManufacturerService } from './manufacturer/manufacturer.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { User } from './user/user.entity';
-import { UserHttpModule } from './user/user-http.module';
+import { Manufacturer } from './entities/Manufacturer';
+import { Product } from './entities/Product';
+import { Purchase } from './entities/Purchase';
+import { Purchasecustomproduct } from './entities/Purchasecustomproduct';
+import { Purchaseproduct } from './entities/Purchaseproduct';
+import { Store } from './entities/Store';
+import { Storeproduct } from './entities/Storeproduct';
+import { User } from './entities/User';
+import { DescartMainModule } from './descart/descart-main.module';
 
 @Module({
   imports: [
@@ -32,30 +25,21 @@ import { UserHttpModule } from './user/user-http.module';
       username: 'root',
       password: 'password',
       database: 'descart',
-      entities: [User],
+      entities: [
+        Manufacturer,
+        Product,
+        Purchase,
+        Purchasecustomproduct,
+        Purchaseproduct,
+        Store,
+        Storeproduct,
+        User,
+      ],
       synchronize: true,
     }),
-    UserHttpModule,
+    DescartMainModule,
   ],
-  controllers: [
-    AppController,
-    AuthController,
-    ProductController,
-    PurchasedProductController,
-    StoreController,
-    PurchaseController,
-    FavoriteProductController,
-    ManufacturerController,
-  ],
-  providers: [
-    AppService,
-    ReceiptService,
-    ProductService,
-    PurchasedProductService,
-    StoreService,
-    PurchaseService,
-    FavoriteProductService,
-    ManufacturerService,
-  ],
+  controllers: [AppController, AuthController],
+  providers: [AppService, ReceiptService],
 })
 export class AppModule {}
