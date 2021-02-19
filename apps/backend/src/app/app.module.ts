@@ -18,13 +18,28 @@ import { FavoriteProductController } from './favorite-product/favorite-product.c
 import { FavoriteProductService } from './favorite-product/favorite-product.service';
 import { ManufacturerController } from './manufacturer/manufacturer.controller';
 import { ManufacturerService } from './manufacturer/manufacturer.service';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { User } from './user/user.entity';
+import { UserHttpModule } from './user/user-http.module';
 
 @Module({
-  imports: [AuthModule],
+  imports: [
+    AuthModule,
+    TypeOrmModule.forRoot({
+      type: 'mysql',
+      host: 'localhost',
+      port: 3306,
+      username: 'root',
+      password: 'password',
+      database: 'descart',
+      entities: [User],
+      synchronize: true,
+    }),
+    UserHttpModule,
+  ],
   controllers: [
     AppController,
     AuthController,
-    UserController,
     ProductController,
     PurchasedProductController,
     StoreController,
@@ -35,7 +50,6 @@ import { ManufacturerService } from './manufacturer/manufacturer.service';
   providers: [
     AppService,
     ReceiptService,
-    UserService,
     ProductService,
     PurchasedProductService,
     StoreService,
