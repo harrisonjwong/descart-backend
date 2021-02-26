@@ -2,9 +2,29 @@
 
 Des-Cart is an purchase tracking and recommendations app created for EECE 4792 (Capstone Design 2) with Waleed Meleis in Spring 2021. This repo contains the backend.
 
-Run the project with `nx serve backend` (which probably requires a `npm install -g nx` or `yarn global add nx` before).
+To start, clone the repo and run `npm install`.
 
-The frontend is here - https://github.com/nickghughes/descart
+To run the project locally, use `nx serve backend` (which probably requires a `npm install -g nx`).
+
+There is probably some way to make a production build but I still need to figure that out.
+
+Frontend repo is here - https://github.com/nickghughes/descart
+
+Database repo is here - https://github.com/nickghughes/descart-db-data
+
+Useful queries defined so far
+
+- localhost:3333/api/descart/purchases/:userId, GET
+  - For the purchase history page, get all purchases based on a userId
+  - pagination TBD
+- localhost:3333/api/descart/purchasepreview/:purchaseId, GET
+  - For the purchase preview, get more information about a single purchase
+- localhost:3333/api/descart/productpreview/:productId, GET
+  - For a product preview, get the multiple places that sells the product and related info
+- localhost:3333/api/descart/discover/:userId, GET
+  - For the discover page, currently gets 50 random products and ignores the userId
+  - Pagination/favorites is currently commented out but would look something like below
+  - /api/descart/discover/:userId?favorite=false&page=1
 
 <!---
 This project was generated using [Nx](https://nx.dev).
