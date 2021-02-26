@@ -14,17 +14,17 @@ Database repo is here - https://github.com/nickghughes/descart-db-data
 
 Useful queries defined so far
 
-- localhost:3333/api/descart/purchases/:userId, GET
+- `localhost:3333/api/descart/purchases/:userId`, `GET`
   - For the purchase history page, get all purchases based on a userId
   - pagination TBD
-- localhost:3333/api/descart/purchasepreview/:purchaseId, GET
+- `localhost:3333/api/descart/purchasepreview/:purchaseId`, `GET`
   - For the purchase preview, get more information about a single purchase
-- localhost:3333/api/descart/productpreview/:productId, GET
+- `localhost:3333/api/descart/productpreview/:productId`, `GET`
   - For a product preview, get the multiple places that sells the product and related info
-- localhost:3333/api/descart/discover/:userId, GET
+- `localhost:3333/api/descart/discover/:userId`, `GET`
   - For the discover page, currently gets 50 random products and ignores the userId
   - Pagination/favorites is currently commented out but would look something like below
-  - /api/descart/discover/:userId?favorite=false&page=1
+  - `/api/descart/discover/:userId?favorite=false&page=1`
 
 <!---
 This project was generated using [Nx](https://nx.dev).
