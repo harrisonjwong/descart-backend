@@ -25,12 +25,36 @@ Useful queries defined so far
   - For the discover page, currently gets 50 random products and ignores the userId
   - Pagination/favorites is currently commented out but would look something like below
   - `/api/descart/discover/:userId?favorite=false&page=1`
-- `localhost:3333/api/descart/autocomplete/store`
+- `localhost:3333/api/descart/autocomplete/store`, `GET`
   - Autocomplete results searching for store names
   - Requires body `{ query: "string" }`
-- `localhost:3333/api/descart/autocomplete/product`
+- `localhost:3333/api/descart/autocomplete/product`, `GET`
   - Autocomplete results searching for product names
   - Requires body `{ query : "string" }`
+- `/api/descart/purchase/:purchaseId`, `DELETE`
+  - delete purchase with name and (probably ) cascade delete on purchaseproduct and purchasecustomproduct
+- `/api/descart/purchase`, `POST`
+  - create purchase given body below
+
+```
+{
+    "user_id": 1,
+    "store_id": 3,
+    "price": "1431.53",
+    "products": [
+        {
+            "name": "jackdaw;sldfjds",
+            "price": "553.32",
+            "quantity": 2
+        },
+        {
+            "id": 1,
+            "price": "299.99",
+            "quantity": 1
+        }
+    ]
+}
+```
 
 <!---
 This project was generated using [Nx](https://nx.dev).

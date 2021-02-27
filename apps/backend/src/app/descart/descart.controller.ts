@@ -1,19 +1,49 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   HttpException,
   HttpStatus,
   Param,
+  Post,
   Query,
 } from '@nestjs/common';
+import { IsNotEmpty } from 'class-validator';
 import { Product } from '../entities/Product';
 import { Purchase } from '../entities/Purchase';
 import { Purchaseproduct } from '../entities/Purchaseproduct';
 import { DescartService } from './descart.service';
 
-class AutocompleteDto {
+export class AutocompleteDto {
+  @IsNotEmpty()
   query: string;
+}
+
+export class CreatePurchaseDto {
+  @IsNotEmpty()
+  user_id: number;
+
+  @IsNotEmpty()
+  store_id: number;
+
+  @IsNotEmpty()
+  price: string;
+
+  @IsNotEmpty()
+  products: ProductDto[];
+}
+
+export class ProductDto {
+  name?: string;
+
+  id?: number;
+
+  @IsNotEmpty()
+  price: string;
+
+  @IsNotEmpty()
+  quantity: number;
 }
 @Controller('descart')
 export class DescartController {
@@ -68,12 +98,17 @@ export class DescartController {
 
   @Get('/autocomplete/product')
   async getSimilarProductNames(@Body() body: AutocompleteDto) {
-    if (!body.query) {
-      throw new HttpException(
-        'need body with { query: "productName" }',
-        HttpStatus.BAD_REQUEST
-      );
-    }
     return await this.descartService.getSimilarProductNames(body.query);
+  }
+
+  @Delete('/purchase/:purchaseId')
+  async deletePurchase(@Param('purchaseId') purchaseId: string) {
+    return await this.descartService.deletePurchase(purchaseId);
+  }
+
+  @Post('/purchase')
+  async createPurchase(@Body() body: CreatePurchaseDto) {
+    // do some validation?
+    return await this.descartService.createPurchase(body);
   }
 }

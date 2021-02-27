@@ -1,6 +1,6 @@
-import { Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 
-import { Repository } from 'typeorm';
+import { DeleteResult, InsertResult, Repository } from 'typeorm';
 import { Purchase } from '../entities/Purchase';
 
 import { InjectRepository } from '@nestjs/typeorm';
@@ -9,6 +9,8 @@ import { Product } from '../entities/Product';
 
 import { RecommendationsService } from '../recommendations/recommendations.service';
 import { Store } from '../entities/Store';
+import { CreatePurchaseDto, ProductDto } from './descart.controller';
+import { Purchasecustomproduct } from '../entities/Purchasecustomproduct';
 
 // TODO - fix return types (I am returning promises of the entities but they no longer match the entities)
 
@@ -24,6 +26,8 @@ export class DescartService {
     private productRepository: Repository<Product>,
     @InjectRepository(Store)
     private storeRepository: Repository<Store>,
+    @InjectRepository(Purchasecustomproduct)
+    private purchasecustomproductRepository: Repository<Purchasecustomproduct>,
     private recommendationsService: RecommendationsService
   ) {}
 
@@ -116,5 +120,65 @@ export class DescartService {
       .addSelect('product.imageUrl', 'imageUrl')
       .where(`product.name like :name`, { name: `%${name}%` })
       .getRawMany();
+  }
+
+  deletePurchase(purchaseId: string): Promise<DeleteResult> {
+    return this.purchaseRepository
+      .createQueryBuilder('purchase')
+      .delete()
+      .from(Purchase)
+      .where('purchase.id = :id', { id: purchaseId })
+      .execute();
+  }
+
+  async createPurchase(body: CreatePurchaseDto): Promise<InsertResult[]> {
+    const today = new Date().toISOString().substring(0, 10);
+    const purchase = await this.purchaseRepository
+      .createQueryBuilder('purchase')
+      .insert()
+      .into(Purchase)
+      .values({
+        storeId: body.store_id,
+        userId: body.user_id,
+        price: body.price,
+        numItems: body.products.length,
+        purchasedAt: today,
+      })
+      .execute();
+    return Promise.all(
+      body.products.map(
+        (product: ProductDto): Promise<InsertResult> => {
+          if (product.id) {
+            return this.purchaseproductRepository
+              .createQueryBuilder('purchaseproduct')
+              .insert()
+              .into(Purchaseproduct)
+              .values({
+                productId: product.id,
+                price: product.price,
+                purchaseId: purchase.identifiers[0].id,
+                quantity: product.quantity,
+                index: 1, // TODO
+              })
+              .execute();
+          } else if (product.name) {
+            return this.purchasecustomproductRepository
+              .createQueryBuilder('purchasecustomproduct')
+              .insert()
+              .into(Purchasecustomproduct)
+              .values({
+                name: product.name,
+                price: product.price,
+                purchaseId: purchase.identifiers[0].id,
+                quantity: product.quantity,
+                index: 1, // TODO
+              })
+              .execute();
+          } else {
+            throw new HttpException('bad create', HttpStatus.BAD_REQUEST);
+          }
+        }
+      )
+    );
   }
 }
