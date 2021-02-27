@@ -3,8 +3,6 @@ import {
   Controller,
   Delete,
   Get,
-  HttpException,
-  HttpStatus,
   Param,
   Post,
   Query,
@@ -58,12 +56,6 @@ export class DescartController {
 
   @Get('/autocomplete/store')
   async getSimilarStoreNames(@Body() body: AutocompleteDto) {
-    if (!body.query) {
-      throw new HttpException(
-        'need body with { query: "storeName" }',
-        HttpStatus.BAD_REQUEST
-      );
-    }
     return await this.descartService.getSimilarStoreNames(body.query);
   }
 
@@ -79,7 +71,6 @@ export class DescartController {
 
   @Post('/purchase')
   async createPurchase(@Body() body: CreatePurchaseDto) {
-    // do some validation?
     return await this.descartService.createPurchase(body);
   }
 }
