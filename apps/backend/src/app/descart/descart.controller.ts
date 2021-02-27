@@ -1,9 +1,20 @@
-import { Controller, Get, Param, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpException,
+  HttpStatus,
+  Param,
+  Query,
+} from '@nestjs/common';
 import { Product } from '../entities/Product';
 import { Purchase } from '../entities/Purchase';
 import { Purchaseproduct } from '../entities/Purchaseproduct';
 import { DescartService } from './descart.service';
 
+class AutocompleteDto {
+  query: string;
+}
 @Controller('descart')
 export class DescartController {
   constructor(private descartService: DescartService) {}
@@ -42,5 +53,27 @@ export class DescartController {
       page
     );
     return p;
+  }
+
+  @Get('/autocomplete/store')
+  async getSimilarStoreNames(@Body() body: AutocompleteDto) {
+    if (!body.query) {
+      throw new HttpException(
+        'need body with { query: "storeName" }',
+        HttpStatus.BAD_REQUEST
+      );
+    }
+    return await this.descartService.getSimilarStoreNames(body.query);
+  }
+
+  @Get('/autocomplete/product')
+  async getSimilarProductNames(@Body() body: AutocompleteDto) {
+    if (!body.query) {
+      throw new HttpException(
+        'need body with { query: "productName" }',
+        HttpStatus.BAD_REQUEST
+      );
+    }
+    return await this.descartService.getSimilarProductNames(body.query);
   }
 }

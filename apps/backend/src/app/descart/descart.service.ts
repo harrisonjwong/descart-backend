@@ -8,6 +8,7 @@ import { Purchaseproduct } from '../entities/Purchaseproduct';
 import { Product } from '../entities/Product';
 
 import { RecommendationsService } from '../recommendations/recommendations.service';
+import { Store } from '../entities/Store';
 
 // TODO - fix return types (I am returning promises of the entities but they no longer match the entities)
 
@@ -21,6 +22,8 @@ export class DescartService {
     private purchaseproductRepository: Repository<Purchaseproduct>,
     @InjectRepository(Product)
     private productRepository: Repository<Product>,
+    @InjectRepository(Store)
+    private storeRepository: Repository<Store>,
     private recommendationsService: RecommendationsService
   ) {}
 
@@ -91,5 +94,27 @@ export class DescartService {
         // .limit(pageSize)
         .getRawMany()
     );
+  }
+
+  getSimilarStoreNames(name: string): Promise<Store[]> {
+    return this.storeRepository
+      .createQueryBuilder('store')
+      .select('store.id', 'id')
+      .addSelect('store.name', 'name')
+      .addSelect('store.imageUrl', 'imageUrl')
+      .where(`store.name like :name`, { name: `%${name}%` })
+      .getRawMany();
+  }
+
+  getSimilarProductNames(name: string): Promise<Product[]> {
+    return this.productRepository
+      .createQueryBuilder('product')
+      .leftJoinAndSelect('product.manufacturer', 'manufacturer')
+      .select('product.id', 'id')
+      .addSelect('product.name', 'name')
+      .addSelect('manufacturer.name', 'manufacturerName')
+      .addSelect('product.imageUrl', 'imageUrl')
+      .where(`product.name like :name`, { name: `%${name}%` })
+      .getRawMany();
   }
 }
