@@ -9,8 +9,9 @@ import { Product } from '../entities/Product';
 
 import { RecommendationsService } from '../recommendations/recommendations.service';
 import { Store } from '../entities/Store';
-import { CreatePurchaseDto, ProductDto } from './descart.controller';
+import { CreatePurchaseDto } from './dto/createpurchase.dto';
 import { Purchasecustomproduct } from '../entities/Purchasecustomproduct';
+import { ProductDto } from './dto/product.dto';
 
 // TODO - fix return types (I am returning promises of the entities but they no longer match the entities)
 

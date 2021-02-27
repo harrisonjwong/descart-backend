@@ -9,42 +9,13 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
-import { IsNotEmpty } from 'class-validator';
 import { Product } from '../entities/Product';
 import { Purchase } from '../entities/Purchase';
 import { Purchaseproduct } from '../entities/Purchaseproduct';
 import { DescartService } from './descart.service';
+import { AutocompleteDto } from './dto/autocomplete.dto';
+import { CreatePurchaseDto } from './dto/createpurchase.dto';
 
-export class AutocompleteDto {
-  @IsNotEmpty()
-  query: string;
-}
-
-export class CreatePurchaseDto {
-  @IsNotEmpty()
-  user_id: number;
-
-  @IsNotEmpty()
-  store_id: number;
-
-  @IsNotEmpty()
-  price: string;
-
-  @IsNotEmpty()
-  products: ProductDto[];
-}
-
-export class ProductDto {
-  name?: string;
-
-  id?: number;
-
-  @IsNotEmpty()
-  price: string;
-
-  @IsNotEmpty()
-  quantity: number;
-}
 @Controller('descart')
 export class DescartController {
   constructor(private descartService: DescartService) {}
