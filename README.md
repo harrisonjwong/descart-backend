@@ -6,29 +6,31 @@ To start, clone the repo and run `npm install`.
 
 To run the project locally, use `nx serve backend` (which probably requires a `npm install -g nx`).
 
+The project will be available at `localhost:3333`
+
 There is probably some way to make a production build but I still need to figure that out.
 
 Frontend repo is here - https://github.com/nickghughes/descart
 
 Database repo is here - https://github.com/nickghughes/descart-db-data
 
-Useful queries defined so far
+#### Useful endpoints
 
-- `localhost:3333/api/descart/purchases/:userId`, `GET`
+- `/api/descart/purchases/:userId`, `GET`
   - For the purchase history page, get all purchases based on a userId
   - pagination TBD
-- `localhost:3333/api/descart/purchasepreview/:purchaseId`, `GET`
+- `/api/descart/purchasepreview/:purchaseId`, `GET`
   - For the purchase preview, get more information about a single purchase
-- `localhost:3333/api/descart/productpreview/:productId`, `GET`
+- `/api/descart/productpreview/:productId`, `GET`
   - For a product preview, get the multiple places that sells the product and related info
-- `localhost:3333/api/descart/discover/:userId`, `GET`
+- `/api/descart/discover/:userId`, `GET`
   - For the discover page, currently gets 50 random products and ignores the userId
   - Pagination/favorites is currently commented out but would look something like below
   - `/api/descart/discover/:userId?favorite=false&page=1`
-- `localhost:3333/api/descart/autocomplete/store`, `GET`
+- `/api/descart/autocomplete/store`, `GET`
   - Autocomplete results searching for store names
   - Requires body `{ query: "string" }`
-- `localhost:3333/api/descart/autocomplete/product`, `GET`
+- `/api/descart/autocomplete/product`, `GET`
   - Autocomplete results searching for product names
   - Requires body `{ query : "string" }`
 - `/api/descart/purchase/:purchaseId`, `DELETE`
