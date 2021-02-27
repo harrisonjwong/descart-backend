@@ -27,8 +27,10 @@ Useful queries defined so far
   - `/api/descart/discover/:userId?favorite=false&page=1`
 - `localhost:3333/api/descart/autocomplete/store`
   - Autocomplete results searching for store names
+  - Requires body { query: String }
 - `localhost:3333/api/descart/autocomplete/product`
   - Autocomplete results searching for product names
+  - Requires body { query : String }
 
 <!---
 This project was generated using [Nx](https://nx.dev).
