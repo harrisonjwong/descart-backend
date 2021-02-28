@@ -46,30 +46,42 @@ export class DescartService {
       .getRawMany();
   }
 
-  getPurchaseProductByPurchaseId(purchaseId: string): Promise<Purchaseproduct> {
+  getPurchaseProductsByPurchaseId(purchaseId: string): Promise<Purchaseproduct[]> {
     return this.purchaseproductRepository
       .createQueryBuilder('purchaseproduct')
       .leftJoinAndSelect('purchaseproduct.product', 'product')
       .leftJoinAndSelect('product.manufacturer', 'manufacturer')
       .select('product.name', 'productName')
-      .addSelect('product.id', 'product_id')
+      .addSelect('product.id', 'productId')
       .addSelect('manufacturer.name', 'manufacturerName')
       .addSelect('product.imageUrl', 'imageUrl')
       .addSelect('purchaseproduct.quantity', 'quantity')
       .addSelect('purchaseproduct.price', 'price')
-      .where('purchaseproduct.id = :id', { id: purchaseId })
-      .getRawOne();
+      .addSelect('purchaseproduct.index', 'index')
+      .where('purchaseproduct.purchase_id = :id', { id: purchaseId })
+      .getRawMany();
+  }
+  
+  getPurchaseCustomProductsByPurchaseId(purchaseId: string): Promise<Purchasecustomproduct[]> {
+    return this.purchasecustomproductRepository
+      .createQueryBuilder('purchasecustomproduct')
+      .select('purchasecustomproduct.name', 'productName')
+      .addSelect('purchasecustomproduct.quantity', 'quantity')
+      .addSelect('purchasecustomproduct.price', 'price')
+      .addSelect('purchasecustomproduct.index', 'index')
+      .where('purchasecustomproduct.purchaseId = :id', { id: purchaseId })
+      .getRawMany();
   }
 
   getProductsByProductId(productId: string): Promise<Product[]> {
     return this.productRepository
       .createQueryBuilder('product')
-      .leftJoinAndSelect('product.storeproducts', 'storeproducts')
-      .leftJoinAndSelect('storeproducts.store', 'store')
+      .innerJoinAndSelect('product.storeproducts', 'storeproducts')
+      .innerJoinAndSelect('storeproducts.store', 'store')
       .select('store.name', 'store_name')
       .addSelect('storeproducts.url', 'url')
       .addSelect('storeproducts.price', 'price')
-      .addSelect('product.imageUrl', 'image_url')
+      .addSelect('store.imageUrl', 'image_url')
       .where('product.id = :id', { id: productId })
       .getRawMany();
   }
@@ -108,6 +120,7 @@ export class DescartService {
       .addSelect('store.name', 'name')
       .addSelect('store.imageUrl', 'imageUrl')
       .where(`store.name like :name`, { name: `%${name}%` })
+      .limit(5)
       .getRawMany();
   }
 
@@ -120,6 +133,7 @@ export class DescartService {
       .addSelect('manufacturer.name', 'manufacturerName')
       .addSelect('product.imageUrl', 'imageUrl')
       .where(`product.name like :name`, { name: `%${name}%` })
+      .limit(5)
       .getRawMany();
   }
 
@@ -142,13 +156,14 @@ export class DescartService {
         storeId: body.store_id,
         userId: body.user_id,
         price: body.price,
+        // TODO reduce with quantities?
         numItems: body.products.length,
         purchasedAt: today,
       })
       .execute();
     return Promise.all(
       body.products.map(
-        (product: ProductDto): Promise<InsertResult> => {
+        (product: ProductDto, idx: number): Promise<InsertResult> => {
           if (product.id) {
             return this.purchaseproductRepository
               .createQueryBuilder('purchaseproduct')
@@ -159,7 +174,7 @@ export class DescartService {
                 price: product.price,
                 purchaseId: purchase.identifiers[0].id,
                 quantity: product.quantity,
-                index: 1, // TODO
+                index: idx, // TODO
               })
               .execute();
           } else if (product.name) {
@@ -172,7 +187,7 @@ export class DescartService {
                 price: product.price,
                 purchaseId: purchase.identifiers[0].id,
                 quantity: product.quantity,
-                index: 1, // TODO
+                index: idx, // TODO
               })
               .execute();
           } else {

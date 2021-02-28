@@ -9,6 +9,7 @@ import {
 } from '@nestjs/common';
 import { Product } from '../entities/Product';
 import { Purchase } from '../entities/Purchase';
+import { Purchasecustomproduct } from '../entities/Purchasecustomproduct';
 import { Purchaseproduct } from '../entities/Purchaseproduct';
 import { DescartService } from './descart.service';
 import { AutocompleteDto } from './dto/autocomplete.dto';
@@ -28,10 +29,16 @@ export class DescartController {
 
   @Get('/purchasepreview/:purchaseId')
   async getPurchaseProductByPurchaseId(@Param('purchaseId') id: string) {
-    const p: Purchaseproduct = await this.descartService.getPurchaseProductByPurchaseId(
+    const purchaseProducts: Purchaseproduct[] = await this.descartService.getPurchaseProductsByPurchaseId(
       id
     );
-    return p;
+    const purchaseCustomProducts: Purchasecustomproduct[] = await this.descartService.getPurchaseCustomProductsByPurchaseId(
+      id
+    );
+    let toReturn = [].concat(purchaseProducts).concat(purchaseCustomProducts).sort((a, b) => a["index"] - b["index"]);
+    console.log(purchaseProducts, purchaseCustomProducts, toReturn);
+
+    return toReturn;
   }
 
   @Get('/productpreview/:productId')
@@ -55,13 +62,13 @@ export class DescartController {
   }
 
   @Get('/autocomplete/store')
-  async getSimilarStoreNames(@Body() body: AutocompleteDto) {
-    return await this.descartService.getSimilarStoreNames(body.query);
+  async getSimilarStoreNames(@Query('query') query: string) {
+    return await this.descartService.getSimilarStoreNames(query);
   }
 
   @Get('/autocomplete/product')
-  async getSimilarProductNames(@Body() body: AutocompleteDto) {
-    return await this.descartService.getSimilarProductNames(body.query);
+  async getSimilarProductNames(@Query('query') query: string) {
+    return await this.descartService.getSimilarProductNames(query);
   }
 
   @Delete('/purchase/:purchaseId')

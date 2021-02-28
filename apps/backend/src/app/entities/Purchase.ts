@@ -9,10 +9,12 @@ import {
   OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
+import { Transform } from 'class-transformer';
 import { User } from './User';
 import { Store } from './Store';
 import { Purchasecustomproduct } from './Purchasecustomproduct';
 import { Purchaseproduct } from './Purchaseproduct';
+const moment = require("moment");
 
 @Index('purchase_id_UNIQUE', ['id'], { unique: true })
 @Index('store_id', ['storeId'], {})
@@ -34,6 +36,8 @@ export class Purchase {
   @Column('int', { name: 'num_items' })
   numItems: number;
 
+  // TODO MAKE THIS WORK
+  @Transform(purchasedAt => moment(purchasedAt).format('MM/DD/YY'))
   @Column('date', { name: 'purchased_at' })
   purchasedAt: string;
 
