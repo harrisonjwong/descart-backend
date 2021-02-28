@@ -88,16 +88,19 @@ export class DescartService {
 
   getDiscoverProductsByUserId(
     userId: string,
+    search: string,
     favorite: string,
     page: string
   ): Promise<Product[]> {
+    console.log(search, favorite)
+
     // const offset = this.PAGE_SIZE * Number(page);
     // const pageSize = this.PAGE_SIZE;
 
-    const productIds: number[] = this.recommendationsService.getRecommendationProductIds();
-    return (
+    let query = (
       this.productRepository
         .createQueryBuilder('product')
+        //.leftJoinAndSelect('product.favoriteproducts', 'favorite', `favorite.productId=product.id AND favorite.userId=${userId}`)
         .leftJoinAndSelect('product.manufacturer', 'manufacturer')
         .leftJoin('storeproduct', 'sp', 'sp.productId=product.id')
         .groupBy('product.id')
@@ -106,11 +109,22 @@ export class DescartService {
         .addSelect('product.name', 'productName')
         .addSelect('manufacturer.name', 'manufacturerName')
         .addSelect('product.imageUrl', 'imageUrl')
-        .where('product.id IN (:...ids)', { ids: productIds })
         // .offset(offset)
         // .limit(pageSize)
-        .getRawMany()
     );
+    if (!(search && search.length != 0) && !(favorite == "true")) {
+      const productIds: number[] = this.recommendationsService.getRecommendationProductIds();
+      query = query.where('product.id IN (:...ids)', { ids: productIds });
+    } else {
+      if (search && search.length !== 0) {
+        query = query.where(`product.name like :name`, { name: `%${search}%` });
+      }
+      if (favorite == "true") {
+        //query = query.where('favorite.active = true');
+      }
+    }
+    
+    return query.getRawMany();
   }
 
   getSimilarStoreNames(name: string): Promise<Store[]> {

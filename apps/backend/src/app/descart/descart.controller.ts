@@ -50,11 +50,13 @@ export class DescartController {
   @Get('/discover/:userId')
   async getDiscoverProductsByUserId(
     @Param('userId') userId: string,
+    @Query('search') search: string,
     @Query('favorite') favorite: string,
     @Query('page') page: string
   ) {
     const p: Product[] = await this.descartService.getDiscoverProductsByUserId(
       userId,
+      search,
       favorite,
       page
     );
