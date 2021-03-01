@@ -6,10 +6,13 @@ import { Purchase } from '../entities/Purchase';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Purchaseproduct } from '../entities/Purchaseproduct';
 import { Product } from '../entities/Product';
+import { User } from '../entities/User';
 
 import { RecommendationsService } from '../recommendations/recommendations.service';
 import { Store } from '../entities/Store';
 import { CreatePurchaseDto } from './dto/createpurchase.dto';
+import { FavoriteProductDto } from './dto/favoriteproduct.dto';
+import { FavoritePurchaseDto } from './dto/favoritepurchase.dto';
 import { Purchasecustomproduct } from '../entities/Purchasecustomproduct';
 import { ProductDto } from './dto/product.dto';
 
@@ -19,6 +22,8 @@ import { ProductDto } from './dto/product.dto';
 export class DescartService {
   PAGE_SIZE: number = 10;
   constructor(
+    @InjectRepository(User)
+    private userRepository: Repository<User>,
     @InjectRepository(Purchase)
     private purchaseRepository: Repository<Purchase>,
     @InjectRepository(Purchaseproduct)
@@ -32,16 +37,26 @@ export class DescartService {
     private recommendationsService: RecommendationsService
   ) {}
 
-  findAllPurchasesByUserId(userId: string, search: string, favorite: string, page: string): Promise<Purchase[]> {
+  SORT_FIELDS = [
+    "purchaseDate",
+    "CONVERT(`price`, float)"
+  ]
+
+  findAllPurchasesByUserId(userId: string, search: string, favorite: string, sort: string, page: string): Promise<Purchase[]> {
+    let sortField = this.SORT_FIELDS[Math.floor(Number(sort) / 2)];
     let query = this.purchaseRepository
       .createQueryBuilder('purchase')
       .leftJoinAndSelect('purchase.store', 'store')
+      .leftJoin('purchase.users', 'users', `users.id=${userId}`)
+      .groupBy('purchase.id')
       .select('purchase.id', 'purchase_id')
       .addSelect('store.name', 'storeName')
       .addSelect('purchase.price', 'price')
       .addSelect('purchase.purchasedAt', 'purchaseDate')
       .addSelect('purchase.numItems', 'items')
       .addSelect('store.imageUrl', 'imageUrl')
+      .addSelect('COUNT(users.id)', 'favorite')
+      .orderBy(sortField, Number(sort) % 2 == 0 ? 'DESC' : 'ASC')
       .where('purchase.userId = :userId', { userId })
 
     if (search && search.length !== 0) {
@@ -94,6 +109,46 @@ export class DescartService {
       .getRawMany();
   }
 
+  async addOrRemoveFavoriteProducts(body: FavoriteProductDto): Promise<void> {
+    let userId = body.user_id;
+    let productId = body.product_id;
+    let favorite = body.favorite;
+
+    let product = await this.productRepository
+      .findOne({id: productId})
+
+    let user = await this.userRepository
+      .findOne({id: userId}, { relations: ["products"] });
+      
+    if (!product || !user || user.products.some(p => p.id == productId) == (favorite == "true")) return;
+    
+    favorite == "true"
+      ? user.products.push(product)
+      : user.products = user.products.filter(p => p.id != product.id);
+
+    await this.userRepository.save(user);
+  }
+
+  async addOrRemoveFavoritePurchases(body: FavoritePurchaseDto): Promise<void> {
+    let userId = body.user_id;
+    let purchaseId = body.purchase_id;
+    let favorite = body.favorite;
+
+    let purchase = await this.purchaseRepository
+      .findOne({id: purchaseId})
+
+    let user = await this.userRepository
+      .findOne({id: userId}, { relations: ["purchases"] });
+
+    if (!purchase || !user || user.purchases.some(p => p.id == purchaseId) == (favorite == "true")) return;
+    
+    favorite == "true"
+      ? user.purchases.push(purchase)
+      : user.purchases = user.purchases.filter(p => p.id != purchase.id);
+  
+    await this.userRepository.save(user);
+  }
+
   getDiscoverProductsByUserId(
     userId: string,
     search: string,
@@ -108,9 +163,11 @@ export class DescartService {
         .createQueryBuilder('product')
         .leftJoinAndSelect('product.manufacturer', 'manufacturer')
         .leftJoin('storeproduct', 'sp', 'sp.productId=product.id')
+        .leftJoin('product.users', 'users', `users.id=${userId}`)
         .groupBy('product.id')
         .select('product.id', 'id')
         .addSelect('COUNT(sp.id)', 'numStores')
+        .addSelect('COUNT(users.id)', 'favorite')
         .addSelect('product.name', 'productName')
         .addSelect('manufacturer.name', 'manufacturerName')
         .addSelect('product.imageUrl', 'imageUrl')

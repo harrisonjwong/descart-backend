@@ -14,6 +14,8 @@ import { Purchaseproduct } from '../entities/Purchaseproduct';
 import { DescartService } from './descart.service';
 import { AutocompleteDto } from './dto/autocomplete.dto';
 import { CreatePurchaseDto } from './dto/createpurchase.dto';
+import { FavoriteProductDto } from './dto/favoriteproduct.dto';
+import { FavoritePurchaseDto } from './dto/favoritepurchase.dto';
 
 @Controller('descart')
 export class DescartController {
@@ -24,11 +26,11 @@ export class DescartController {
     @Param('userId') id: string,
     @Query('search') search: string,
     @Query('favorite') favorite: string,
+    @Query('sort') sort: string,
     @Query('page') page: string
   ) {
-    console.log(search, favorite);
     const p: Purchase[] = await this.descartService.findAllPurchasesByUserId(
-      id, search, favorite, page
+      id, search, favorite, sort, page
     );
     return p;
   }
@@ -87,5 +89,15 @@ export class DescartController {
   @Post('/purchase')
   async createPurchase(@Body() body: CreatePurchaseDto) {
     return await this.descartService.createPurchase(body);
+  }
+
+  @Post('/favoriteproduct')
+  async favoriteProduct(@Body() body: FavoriteProductDto) {
+    return await this.descartService.addOrRemoveFavoriteProducts(body);
+  }
+
+  @Post('/favoritepurchase')
+  async favoritePurchase(@Body() body: FavoritePurchaseDto) {
+    return await this.descartService.addOrRemoveFavoritePurchases(body);
   }
 }
