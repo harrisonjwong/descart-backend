@@ -20,9 +20,15 @@ export class DescartController {
   constructor(private descartService: DescartService) {}
 
   @Get('/purchases/:userId')
-  async getPurchasesByUser(@Param('userId') id: string) {
+  async getPurchasesByUser(
+    @Param('userId') id: string,
+    @Query('search') search: string,
+    @Query('favorite') favorite: string,
+    @Query('page') page: string
+  ) {
+    console.log(search, favorite);
     const p: Purchase[] = await this.descartService.findAllPurchasesByUserId(
-      id
+      id, search, favorite, page
     );
     return p;
   }

@@ -32,8 +32,8 @@ export class DescartService {
     private recommendationsService: RecommendationsService
   ) {}
 
-  findAllPurchasesByUserId(userId: string): Promise<Purchase[]> {
-    return this.purchaseRepository
+  findAllPurchasesByUserId(userId: string, search: string, favorite: string, page: string): Promise<Purchase[]> {
+    let query = this.purchaseRepository
       .createQueryBuilder('purchase')
       .leftJoinAndSelect('purchase.store', 'store')
       .select('purchase.id', 'purchase_id')
@@ -43,7 +43,15 @@ export class DescartService {
       .addSelect('purchase.numItems', 'items')
       .addSelect('store.imageUrl', 'imageUrl')
       .where('purchase.userId = :userId', { userId })
-      .getRawMany();
+
+    if (search && search.length !== 0) {
+        query = query.where(`store.name like :name`, { name: `%${search}%` });
+    }
+    if (favorite == "true") {
+      query = query.innerJoin('purchase.users', 'user', `user.id = ${userId}`);
+    }
+
+    return query.getRawMany();
   }
 
   getPurchaseProductsByPurchaseId(purchaseId: string): Promise<Purchaseproduct[]> {
@@ -92,15 +100,12 @@ export class DescartService {
     favorite: string,
     page: string
   ): Promise<Product[]> {
-    console.log(search, favorite)
-
     // const offset = this.PAGE_SIZE * Number(page);
     // const pageSize = this.PAGE_SIZE;
 
     let query = (
       this.productRepository
         .createQueryBuilder('product')
-        //.leftJoinAndSelect('product.favoriteproducts', 'favorite', `favorite.productId=product.id AND favorite.userId=${userId}`)
         .leftJoinAndSelect('product.manufacturer', 'manufacturer')
         .leftJoin('storeproduct', 'sp', 'sp.productId=product.id')
         .groupBy('product.id')
@@ -120,7 +125,7 @@ export class DescartService {
         query = query.where(`product.name like :name`, { name: `%${search}%` });
       }
       if (favorite == "true") {
-        //query = query.where('favorite.active = true');
+        query = query.innerJoin('product.users', 'user', `user.id = ${userId}`);
       }
     }
     
