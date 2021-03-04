@@ -29,15 +29,15 @@ export class Storeproduct {
   url: string | null;
 
   @ManyToOne('Store', 'storeproducts', {
-    onDelete: 'NO ACTION',
+    onDelete: 'CASCADE',
     onUpdate: 'NO ACTION',
   })
   @JoinColumn([{ name: 'store_id', referencedColumnName: 'id' }])
   store: Store;
 
   @ManyToOne('Product', 'storeproducts', {
-    onDelete: 'NO ACTION',
-    onUpdate: 'NO ACTION',
+    onDelete: 'CASCADE',
+    onUpdate: 'CASCADE',
   })
   @JoinColumn([{ name: 'product_id', referencedColumnName: 'id' }])
   product: Product;
