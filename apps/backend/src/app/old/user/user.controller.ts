@@ -9,7 +9,6 @@ import {
   Post,
   UseGuards,
 } from '@nestjs/common';
-import { JwtAuthGuard } from 'libs/auth/src/lib/jwt-auth.guard';
 import { User } from './user.entity';
 import { UserService } from './user.service';
 import { IsEmail, IsNotEmpty } from 'class-validator';
