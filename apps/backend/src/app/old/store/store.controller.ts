@@ -6,7 +6,6 @@ import {
   HttpStatus,
   Param,
 } from '@nestjs/common';
-import { JwtAuthGuard } from 'libs/auth/src/lib/jwt-auth.guard';
 import { StoreService } from './store.service';
 
 @Controller('store')
