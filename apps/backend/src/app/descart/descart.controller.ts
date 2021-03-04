@@ -6,7 +6,11 @@ import {
   Param,
   Post,
   Query,
+  UseGuards,
+  Request,
 } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { Product } from '../entities/Product';
 import { Purchase } from '../entities/Purchase';
 import { Purchaseproduct } from '../entities/Purchaseproduct';
@@ -18,8 +22,18 @@ import { CreatePurchaseDto } from './dto/createpurchase.dto';
 export class DescartController {
   constructor(private descartService: DescartService) {}
 
+  @UseGuards(JwtAuthGuard)
+  @Get('/purchases')
+  async getPurchasesByUser(@Request() req, @Param('userId') id: string) {
+    const userIdFromJwt = req.user.userId;
+    const p: Purchase[] = await this.descartService.findAllPurchasesByUserId(
+      userIdFromJwt
+    );
+    return p;
+  }
+
   @Get('/purchases/:userId')
-  async getPurchasesByUser(@Param('userId') id: string) {
+  async getPurchasesByUserPassId(@Param('userId') id: string) {
     const p: Purchase[] = await this.descartService.findAllPurchasesByUserId(
       id
     );

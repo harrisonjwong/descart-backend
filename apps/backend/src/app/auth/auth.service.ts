@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { UsersService } from './users/users.service';
 import { JwtService } from '@nestjs/jwt';
 import { User } from '../entities/User';
@@ -15,9 +15,17 @@ export class AuthService {
     if (user) {
       return user;
     } else {
-      return this.usersService.createUser(displayName, email).then(() => {
-        return this.usersService.findOne(displayName, email);
-      });
+      return this.usersService
+        .createUser(displayName, email)
+        .then(() => {
+          return this.usersService.findOne(displayName, email);
+        })
+        .catch(() => {
+          throw new HttpException(
+            'user creation failed, duplicated email?',
+            HttpStatus.BAD_REQUEST
+          );
+        });
     }
   }
 
