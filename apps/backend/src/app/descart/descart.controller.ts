@@ -16,6 +16,7 @@ import { AutocompleteDto } from './dto/autocomplete.dto';
 import { CreatePurchaseDto } from './dto/createpurchase.dto';
 import { FavoriteProductDto } from './dto/favoriteproduct.dto';
 import { FavoritePurchaseDto } from './dto/favoritepurchase.dto';
+const moment = require("moment");
 
 @Controller('descart')
 export class DescartController {
@@ -27,17 +28,22 @@ export class DescartController {
     @Query('search') search: string,
     @Query('favorite') favorite: string,
     @Query('sort') sort: string,
+    @Query('page_size') pageSize: string,
     @Query('page') page: string
   ) {
     const p: Purchase[] = await this.descartService.findAllPurchasesByUserId(
-      id, search, favorite, sort, page
+      id, search, favorite, sort, pageSize, page
     );
-    return p;
+    return p.map((purchase) => {
+      purchase["purchaseDate"] = moment(purchase["purchaseDate"]).format("MM/DD/yyyy");
+      return purchase;
+    });
   }
 
   @Get('/purchasepreview/:purchaseId')
   async getPurchaseProductByPurchaseId(@Param('purchaseId') id: string) {
     const purchaseProducts: Purchaseproduct[] = await this.descartService.getPurchaseProductsByPurchaseId(
+      "1",
       id
     );
     const purchaseCustomProducts: Purchasecustomproduct[] = await this.descartService.getPurchaseCustomProductsByPurchaseId(
@@ -60,12 +66,14 @@ export class DescartController {
     @Param('userId') userId: string,
     @Query('search') search: string,
     @Query('favorite') favorite: string,
+    @Query('page_size') pageSize: string,
     @Query('page') page: string
   ) {
     const p: Product[] = await this.descartService.getDiscoverProductsByUserId(
       userId,
       search,
       favorite,
+      pageSize,
       page
     );
     return p;
@@ -88,7 +96,9 @@ export class DescartController {
 
   @Post('/purchase')
   async createPurchase(@Body() body: CreatePurchaseDto) {
-    return await this.descartService.createPurchase(body);
+    const p: Purchase = await this.descartService.createPurchase(body);
+    p["purchaseDate"] = moment(p["purchaseDate"]).format("MM/DD/yyyy");
+    return p;
   }
 
   @Post('/favoriteproduct')

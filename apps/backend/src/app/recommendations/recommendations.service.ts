@@ -5,8 +5,8 @@ export class RecommendationsService {
   NUM_RECS: number;
   TOTAL_PRODUCTS: number;
   constructor() {
-    this.NUM_RECS = 50;
-    this.TOTAL_PRODUCTS = 1000;
+    this.NUM_RECS = 100;
+    this.TOTAL_PRODUCTS = 8000;
   }
   getRecommendationProductIds(): number[] {
     const nums: Set<number> = new Set();
@@ -17,6 +17,6 @@ export class RecommendationsService {
   }
 
   getRecommendationProductIdsTest(): number[] {
-    return [...Array(50).keys()];
+    return [...Array(this.NUM_RECS).keys()];
   }
 }

@@ -42,7 +42,8 @@ export class DescartService {
     "CONVERT(`price`, float)"
   ]
 
-  findAllPurchasesByUserId(userId: string, search: string, favorite: string, sort: string, page: string): Promise<Purchase[]> {
+  findAllPurchasesByUserId(userId: string, search: string, favorite: string, sort: string, pageSize: string, page: string): Promise<Purchase[]> {
+    console.log(favorite, sort, search);
     let sortField = this.SORT_FIELDS[Math.floor(Number(sort) / 2)];
     let query = this.purchaseRepository
       .createQueryBuilder('purchase')
@@ -56,11 +57,13 @@ export class DescartService {
       .addSelect('purchase.numItems', 'items')
       .addSelect('store.imageUrl', 'imageUrl')
       .addSelect('COUNT(users.id)', 'favorite')
-      .orderBy(sortField, Number(sort) % 2 == 0 ? 'DESC' : 'ASC')
       .where('purchase.userId = :userId', { userId })
+      .orderBy(sortField, Number(sort) % 2 == 0 ? 'DESC' : 'ASC')
+      .offset(Number(pageSize) * Number(page))
+      .limit(Number(pageSize))
 
     if (search && search.length !== 0) {
-        query = query.where(`store.name like :name`, { name: `%${search}%` });
+      query = query.where(`store.name like :name`, { name: `%${search}%` });
     }
     if (favorite == "true") {
       query = query.innerJoin('purchase.users', 'user', `user.id = ${userId}`);
@@ -69,11 +72,13 @@ export class DescartService {
     return query.getRawMany();
   }
 
-  getPurchaseProductsByPurchaseId(purchaseId: string): Promise<Purchaseproduct[]> {
+  getPurchaseProductsByPurchaseId(userId: string, purchaseId: string): Promise<Purchaseproduct[]> {
     return this.purchaseproductRepository
       .createQueryBuilder('purchaseproduct')
       .leftJoinAndSelect('purchaseproduct.product', 'product')
       .leftJoinAndSelect('product.manufacturer', 'manufacturer')
+      .leftJoin('product.users', 'users', `users.id=${userId}`)
+      .groupBy('purchaseproduct.id')
       .select('product.name', 'productName')
       .addSelect('product.id', 'productId')
       .addSelect('manufacturer.name', 'manufacturerName')
@@ -81,6 +86,7 @@ export class DescartService {
       .addSelect('purchaseproduct.quantity', 'quantity')
       .addSelect('purchaseproduct.price', 'price')
       .addSelect('purchaseproduct.index', 'index')
+      .addSelect('COUNT(users.id)', 'favorite')
       .where('purchaseproduct.purchase_id = :id', { id: purchaseId })
       .getRawMany();
   }
@@ -153,10 +159,9 @@ export class DescartService {
     userId: string,
     search: string,
     favorite: string,
+    pageSize: string,
     page: string
   ): Promise<Product[]> {
-    // const offset = this.PAGE_SIZE * Number(page);
-    // const pageSize = this.PAGE_SIZE;
 
     let query = (
       this.productRepository
@@ -171,8 +176,8 @@ export class DescartService {
         .addSelect('product.name', 'productName')
         .addSelect('manufacturer.name', 'manufacturerName')
         .addSelect('product.imageUrl', 'imageUrl')
-        // .offset(offset)
-        // .limit(pageSize)
+        .offset(Number(page) * Number(pageSize))
+        .limit(Number(pageSize))
     );
     if (!(search && search.length != 0) && !(favorite == "true")) {
       const productIds: number[] = this.recommendationsService.getRecommendationProductIds();
@@ -222,8 +227,12 @@ export class DescartService {
       .execute();
   }
 
-  async createPurchase(body: CreatePurchaseDto): Promise<InsertResult[]> {
-    const today = new Date().toISOString().substring(0, 10);
+  async createPurchase(body: CreatePurchaseDto): Promise<Purchase> {
+    const today = new Date();
+    let numItems = 0;
+    body.products.map((product: ProductDto) => {
+      numItems += product.quantity;
+    });
     const purchase = await this.purchaseRepository
       .createQueryBuilder('purchase')
       .insert()
@@ -232,12 +241,11 @@ export class DescartService {
         storeId: body.store_id,
         userId: body.user_id,
         price: body.price,
-        // TODO reduce with quantities?
-        numItems: body.products.length,
+        numItems,
         purchasedAt: today,
       })
       .execute();
-    return Promise.all(
+    await Promise.all(
       body.products.map(
         (product: ProductDto, idx: number): Promise<InsertResult> => {
           if (product.id) {
@@ -250,7 +258,7 @@ export class DescartService {
                 price: product.price,
                 purchaseId: purchase.identifiers[0].id,
                 quantity: product.quantity,
-                index: idx, // TODO
+                index: idx
               })
               .execute();
           } else if (product.name) {
@@ -263,7 +271,7 @@ export class DescartService {
                 price: product.price,
                 purchaseId: purchase.identifiers[0].id,
                 quantity: product.quantity,
-                index: idx, // TODO
+                index: idx
               })
               .execute();
           } else {
@@ -272,5 +280,21 @@ export class DescartService {
         }
       )
     );
+    let result = await this.purchaseRepository
+      .createQueryBuilder('purchase')
+      .leftJoinAndSelect('purchase.store', 'store')
+      .leftJoin('purchase.users', 'users', `users.id=${body.user_id}`)
+      .groupBy('purchase.id')
+      .select('purchase.id', 'purchase_id')
+      .addSelect('store.name', 'storeName')
+      .addSelect('purchase.price', 'price')
+      .addSelect('purchase.purchasedAt', 'purchaseDate')
+      .addSelect('purchase.numItems', 'items')
+      .addSelect('store.imageUrl', 'imageUrl')
+      .addSelect('COUNT(users.id)', 'favorite')
+      .where(`purchase.id=${purchase.identifiers[0].id}`)
+      .getRawOne();
+
+    return result;
   }
 }
