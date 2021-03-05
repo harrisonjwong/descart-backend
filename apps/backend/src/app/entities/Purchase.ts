@@ -34,8 +34,8 @@ export class Purchase {
   @Column('int', { name: 'num_items' })
   numItems: number;
 
-  @Column('date', { name: 'purchased_at' })
-  purchasedAt: string;
+  @Column('datetime', { name: 'purchased_at' })
+  purchasedAt: Date;
 
   @ManyToMany('User', 'purchases')
   @JoinTable({

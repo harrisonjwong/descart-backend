@@ -32,15 +32,15 @@ export class Purchaseproduct {
   index: number;
 
   @ManyToOne('Purchase', 'purchaseproducts', {
-    onDelete: 'NO ACTION',
-    onUpdate: 'NO ACTION',
+    onDelete: 'CASCADE',
+    onUpdate: 'CASCADE',
   })
   @JoinColumn([{ name: 'purchase_id', referencedColumnName: 'id' }])
   purchase: Purchase;
 
   @ManyToOne('Product', 'purchaseproducts', {
-    onDelete: 'NO ACTION',
-    onUpdate: 'NO ACTION',
+    onDelete: 'CASCADE',
+    onUpdate: 'CASCADE',
   })
   @JoinColumn([{ name: 'product_id', referencedColumnName: 'id' }])
   product: Product;

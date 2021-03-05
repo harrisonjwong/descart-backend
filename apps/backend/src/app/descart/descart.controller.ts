@@ -9,29 +9,50 @@ import {
 } from '@nestjs/common';
 import { Product } from '../entities/Product';
 import { Purchase } from '../entities/Purchase';
+import { Purchasecustomproduct } from '../entities/Purchasecustomproduct';
 import { Purchaseproduct } from '../entities/Purchaseproduct';
 import { DescartService } from './descart.service';
 import { AutocompleteDto } from './dto/autocomplete.dto';
 import { CreatePurchaseDto } from './dto/createpurchase.dto';
+import { FavoriteProductDto } from './dto/favoriteproduct.dto';
+import { FavoritePurchaseDto } from './dto/favoritepurchase.dto';
+const moment = require("moment");
 
 @Controller('descart')
 export class DescartController {
   constructor(private descartService: DescartService) {}
 
   @Get('/purchases/:userId')
-  async getPurchasesByUser(@Param('userId') id: string) {
+  async getPurchasesByUser(
+    @Param('userId') id: string,
+    @Query('search') search: string,
+    @Query('favorite') favorite: string,
+    @Query('sort') sort: string,
+    @Query('page_size') pageSize: string,
+    @Query('page') page: string
+  ) {
     const p: Purchase[] = await this.descartService.findAllPurchasesByUserId(
-      id
+      id, search, favorite, sort, pageSize, page
     );
-    return p;
+    return p.map((purchase) => {
+      purchase["purchaseDate"] = moment(purchase["purchaseDate"]).format("MM/DD/yyyy");
+      return purchase;
+    });
   }
 
   @Get('/purchasepreview/:purchaseId')
   async getPurchaseProductByPurchaseId(@Param('purchaseId') id: string) {
-    const p: Purchaseproduct = await this.descartService.getPurchaseProductByPurchaseId(
+    const purchaseProducts: Purchaseproduct[] = await this.descartService.getPurchaseProductsByPurchaseId(
+      "1",
       id
     );
-    return p;
+    const purchaseCustomProducts: Purchasecustomproduct[] = await this.descartService.getPurchaseCustomProductsByPurchaseId(
+      id
+    );
+    let toReturn = [].concat(purchaseProducts).concat(purchaseCustomProducts).sort((a, b) => a["index"] - b["index"]);
+    console.log(purchaseProducts, purchaseCustomProducts, toReturn);
+
+    return toReturn;
   }
 
   @Get('/productpreview/:productId')
@@ -43,25 +64,29 @@ export class DescartController {
   @Get('/discover/:userId')
   async getDiscoverProductsByUserId(
     @Param('userId') userId: string,
+    @Query('search') search: string,
     @Query('favorite') favorite: string,
+    @Query('page_size') pageSize: string,
     @Query('page') page: string
   ) {
     const p: Product[] = await this.descartService.getDiscoverProductsByUserId(
       userId,
+      search,
       favorite,
+      pageSize,
       page
     );
     return p;
   }
 
   @Get('/autocomplete/store')
-  async getSimilarStoreNames(@Body() body: AutocompleteDto) {
-    return await this.descartService.getSimilarStoreNames(body.query);
+  async getSimilarStoreNames(@Query('query') query: string) {
+    return await this.descartService.getSimilarStoreNames(query);
   }
 
   @Get('/autocomplete/product')
-  async getSimilarProductNames(@Body() body: AutocompleteDto) {
-    return await this.descartService.getSimilarProductNames(body.query);
+  async getSimilarProductNames(@Query('query') query: string) {
+    return await this.descartService.getSimilarProductNames(query);
   }
 
   @Delete('/purchase/:purchaseId')
@@ -71,6 +96,18 @@ export class DescartController {
 
   @Post('/purchase')
   async createPurchase(@Body() body: CreatePurchaseDto) {
-    return await this.descartService.createPurchase(body);
+    const p: Purchase = await this.descartService.createPurchase(body);
+    p["purchaseDate"] = moment(p["purchaseDate"]).format("MM/DD/yyyy");
+    return p;
+  }
+
+  @Post('/favoriteproduct')
+  async favoriteProduct(@Body() body: FavoriteProductDto) {
+    return await this.descartService.addOrRemoveFavoriteProducts(body);
+  }
+
+  @Post('/favoritepurchase')
+  async favoritePurchase(@Body() body: FavoritePurchaseDto) {
+    return await this.descartService.addOrRemoveFavoritePurchases(body);
   }
 }
