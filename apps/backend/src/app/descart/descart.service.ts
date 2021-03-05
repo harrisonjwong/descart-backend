@@ -124,8 +124,7 @@ export class DescartService {
       .getRawMany();
   }
 
-  async addOrRemoveFavoriteProducts(body: FavoriteProductDto): Promise<void> {
-    let userId = body.user_id;
+  async addOrRemoveFavoriteProducts(userId: number, body: FavoriteProductDto): Promise<void> {
     let productId = body.product_id;
     let favorite = body.favorite;
 
@@ -150,8 +149,7 @@ export class DescartService {
     await this.userRepository.save(user);
   }
 
-  async addOrRemoveFavoritePurchases(body: FavoritePurchaseDto): Promise<void> {
-    let userId = body.user_id;
+  async addOrRemoveFavoritePurchases(userId: number, body: FavoritePurchaseDto): Promise<void> {
     let purchaseId = body.purchase_id;
     let favorite = body.favorite;
 
@@ -245,19 +243,20 @@ export class DescartService {
       .execute();
   }
 
-  async createPurchase(body: CreatePurchaseDto): Promise<Purchase> {
+  async createPurchase(userId: number, body: CreatePurchaseDto): Promise<Purchase> {
     const today = new Date();
     let numItems = 0;
     body.products.map((product: ProductDto) => {
       numItems += product.quantity;
     });
+    console.log(body.products);
     const purchase = await this.purchaseRepository
       .createQueryBuilder('purchase')
       .insert()
       .into(Purchase)
       .values({
         storeId: body.store_id,
-        userId: body.user_id,
+        userId: userId,
         price: body.price,
         numItems,
         purchasedAt: today,
@@ -301,7 +300,7 @@ export class DescartService {
     let result = await this.purchaseRepository
       .createQueryBuilder('purchase')
       .leftJoinAndSelect('purchase.store', 'store')
-      .leftJoin('purchase.users', 'users', `users.id=${body.user_id}`)
+      .leftJoin('purchase.users', 'users', `users.id=${userId}`)
       .groupBy('purchase.id')
       .select('purchase.id', 'purchase_id')
       .addSelect('store.name', 'storeName')
