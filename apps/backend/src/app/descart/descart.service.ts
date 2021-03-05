@@ -6,10 +6,13 @@ import { Purchase } from '../entities/Purchase';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Purchaseproduct } from '../entities/Purchaseproduct';
 import { Product } from '../entities/Product';
+import { User } from '../entities/User';
 
 import { RecommendationsService } from '../recommendations/recommendations.service';
 import { Store } from '../entities/Store';
 import { CreatePurchaseDto } from './dto/createpurchase.dto';
+import { FavoriteProductDto } from './dto/favoriteproduct.dto';
+import { FavoritePurchaseDto } from './dto/favoritepurchase.dto';
 import { Purchasecustomproduct } from '../entities/Purchasecustomproduct';
 import { ProductDto } from './dto/product.dto';
 
@@ -19,6 +22,8 @@ import { ProductDto } from './dto/product.dto';
 export class DescartService {
   PAGE_SIZE: number = 10;
   constructor(
+    @InjectRepository(User)
+    private userRepository: Repository<User>,
     @InjectRepository(Purchase)
     private purchaseRepository: Repository<Purchase>,
     @InjectRepository(Purchaseproduct)
@@ -32,73 +37,161 @@ export class DescartService {
     private recommendationsService: RecommendationsService
   ) {}
 
-  findAllPurchasesByUserId(userId: string): Promise<Purchase[]> {
-    return this.purchaseRepository
+  SORT_FIELDS = [
+    "purchaseDate",
+    "CONVERT(`price`, float)"
+  ]
+
+  findAllPurchasesByUserId(userId: string, search: string, favorite: string, sort: string, pageSize: string, page: string): Promise<Purchase[]> {
+    console.log(favorite, sort, search);
+    let sortField = this.SORT_FIELDS[Math.floor(Number(sort) / 2)];
+    let query = this.purchaseRepository
       .createQueryBuilder('purchase')
       .leftJoinAndSelect('purchase.store', 'store')
+      .leftJoin('purchase.users', 'users', `users.id=${userId}`)
+      .groupBy('purchase.id')
       .select('purchase.id', 'purchase_id')
       .addSelect('store.name', 'storeName')
       .addSelect('purchase.price', 'price')
       .addSelect('purchase.purchasedAt', 'purchaseDate')
       .addSelect('purchase.numItems', 'items')
       .addSelect('store.imageUrl', 'imageUrl')
+      .addSelect('COUNT(users.id)', 'favorite')
       .where('purchase.userId = :userId', { userId })
-      .getRawMany();
+      .orderBy(sortField, Number(sort) % 2 == 0 ? 'DESC' : 'ASC')
+      .offset(Number(pageSize) * Number(page))
+      .limit(Number(pageSize))
+
+    if (search && search.length !== 0) {
+      query = query.where(`store.name like :name`, { name: `%${search}%` });
+    }
+    if (favorite == "true") {
+      query = query.innerJoin('purchase.users', 'user', `user.id = ${userId}`);
+    }
+
+    return query.getRawMany();
   }
 
-  getPurchaseProductByPurchaseId(purchaseId: string): Promise<Purchaseproduct> {
+  getPurchaseProductsByPurchaseId(userId: string, purchaseId: string): Promise<Purchaseproduct[]> {
     return this.purchaseproductRepository
       .createQueryBuilder('purchaseproduct')
       .leftJoinAndSelect('purchaseproduct.product', 'product')
       .leftJoinAndSelect('product.manufacturer', 'manufacturer')
+      .leftJoin('product.users', 'users', `users.id=${userId}`)
+      .groupBy('purchaseproduct.id')
       .select('product.name', 'productName')
-      .addSelect('product.id', 'product_id')
+      .addSelect('product.id', 'productId')
       .addSelect('manufacturer.name', 'manufacturerName')
       .addSelect('product.imageUrl', 'imageUrl')
       .addSelect('purchaseproduct.quantity', 'quantity')
       .addSelect('purchaseproduct.price', 'price')
-      .where('purchaseproduct.id = :id', { id: purchaseId })
-      .getRawOne();
+      .addSelect('purchaseproduct.index', 'index')
+      .addSelect('COUNT(users.id)', 'favorite')
+      .where('purchaseproduct.purchase_id = :id', { id: purchaseId })
+      .getRawMany();
+  }
+  
+  getPurchaseCustomProductsByPurchaseId(purchaseId: string): Promise<Purchasecustomproduct[]> {
+    return this.purchasecustomproductRepository
+      .createQueryBuilder('purchasecustomproduct')
+      .select('purchasecustomproduct.name', 'productName')
+      .addSelect('purchasecustomproduct.quantity', 'quantity')
+      .addSelect('purchasecustomproduct.price', 'price')
+      .addSelect('purchasecustomproduct.index', 'index')
+      .where('purchasecustomproduct.purchaseId = :id', { id: purchaseId })
+      .getRawMany();
   }
 
   getProductsByProductId(productId: string): Promise<Product[]> {
     return this.productRepository
       .createQueryBuilder('product')
-      .leftJoinAndSelect('product.storeproducts', 'storeproducts')
-      .leftJoinAndSelect('storeproducts.store', 'store')
+      .innerJoinAndSelect('product.storeproducts', 'storeproducts')
+      .innerJoinAndSelect('storeproducts.store', 'store')
       .select('store.name', 'store_name')
       .addSelect('storeproducts.url', 'url')
       .addSelect('storeproducts.price', 'price')
-      .addSelect('product.imageUrl', 'image_url')
+      .addSelect('store.imageUrl', 'image_url')
       .where('product.id = :id', { id: productId })
       .getRawMany();
   }
 
+  async addOrRemoveFavoriteProducts(body: FavoriteProductDto): Promise<void> {
+    let userId = body.user_id;
+    let productId = body.product_id;
+    let favorite = body.favorite;
+
+    let product = await this.productRepository
+      .findOne({id: productId})
+
+    let user = await this.userRepository
+      .findOne({id: userId}, { relations: ["products"] });
+      
+    if (!product || !user || user.products.some(p => p.id == productId) == (favorite == "true")) return;
+    
+    favorite == "true"
+      ? user.products.push(product)
+      : user.products = user.products.filter(p => p.id != product.id);
+
+    await this.userRepository.save(user);
+  }
+
+  async addOrRemoveFavoritePurchases(body: FavoritePurchaseDto): Promise<void> {
+    let userId = body.user_id;
+    let purchaseId = body.purchase_id;
+    let favorite = body.favorite;
+
+    let purchase = await this.purchaseRepository
+      .findOne({id: purchaseId})
+
+    let user = await this.userRepository
+      .findOne({id: userId}, { relations: ["purchases"] });
+
+    if (!purchase || !user || user.purchases.some(p => p.id == purchaseId) == (favorite == "true")) return;
+    
+    favorite == "true"
+      ? user.purchases.push(purchase)
+      : user.purchases = user.purchases.filter(p => p.id != purchase.id);
+  
+    await this.userRepository.save(user);
+  }
+
   getDiscoverProductsByUserId(
     userId: string,
+    search: string,
     favorite: string,
+    pageSize: string,
     page: string
   ): Promise<Product[]> {
-    // const offset = this.PAGE_SIZE * Number(page);
-    // const pageSize = this.PAGE_SIZE;
 
-    const productIds: number[] = this.recommendationsService.getRecommendationProductIds();
-    return (
+    let query = (
       this.productRepository
         .createQueryBuilder('product')
         .leftJoinAndSelect('product.manufacturer', 'manufacturer')
         .leftJoin('storeproduct', 'sp', 'sp.productId=product.id')
+        .leftJoin('product.users', 'users', `users.id=${userId}`)
         .groupBy('product.id')
         .select('product.id', 'id')
         .addSelect('COUNT(sp.id)', 'numStores')
+        .addSelect('COUNT(users.id)', 'favorite')
         .addSelect('product.name', 'productName')
         .addSelect('manufacturer.name', 'manufacturerName')
         .addSelect('product.imageUrl', 'imageUrl')
-        .where('product.id IN (:...ids)', { ids: productIds })
-        // .offset(offset)
-        // .limit(pageSize)
-        .getRawMany()
+        .offset(Number(page) * Number(pageSize))
+        .limit(Number(pageSize))
     );
+    if (!(search && search.length != 0) && !(favorite == "true")) {
+      const productIds: number[] = this.recommendationsService.getRecommendationProductIds();
+      query = query.where('product.id IN (:...ids)', { ids: productIds });
+    } else {
+      if (search && search.length !== 0) {
+        query = query.where(`product.name like :name`, { name: `%${search}%` });
+      }
+      if (favorite == "true") {
+        query = query.innerJoin('product.users', 'user', `user.id = ${userId}`);
+      }
+    }
+    
+    return query.getRawMany();
   }
 
   getSimilarStoreNames(name: string): Promise<Store[]> {
@@ -108,6 +201,7 @@ export class DescartService {
       .addSelect('store.name', 'name')
       .addSelect('store.imageUrl', 'imageUrl')
       .where(`store.name like :name`, { name: `%${name}%` })
+      .limit(5)
       .getRawMany();
   }
 
@@ -120,6 +214,7 @@ export class DescartService {
       .addSelect('manufacturer.name', 'manufacturerName')
       .addSelect('product.imageUrl', 'imageUrl')
       .where(`product.name like :name`, { name: `%${name}%` })
+      .limit(5)
       .getRawMany();
   }
 
@@ -132,8 +227,12 @@ export class DescartService {
       .execute();
   }
 
-  async createPurchase(body: CreatePurchaseDto): Promise<InsertResult[]> {
-    const today = new Date().toISOString().substring(0, 10);
+  async createPurchase(body: CreatePurchaseDto): Promise<Purchase> {
+    const today = new Date();
+    let numItems = 0;
+    body.products.map((product: ProductDto) => {
+      numItems += product.quantity;
+    });
     const purchase = await this.purchaseRepository
       .createQueryBuilder('purchase')
       .insert()
@@ -142,13 +241,13 @@ export class DescartService {
         storeId: body.store_id,
         userId: body.user_id,
         price: body.price,
-        numItems: body.products.length,
+        numItems,
         purchasedAt: today,
       })
       .execute();
-    return Promise.all(
+    await Promise.all(
       body.products.map(
-        (product: ProductDto): Promise<InsertResult> => {
+        (product: ProductDto, idx: number): Promise<InsertResult> => {
           if (product.id) {
             return this.purchaseproductRepository
               .createQueryBuilder('purchaseproduct')
@@ -159,7 +258,7 @@ export class DescartService {
                 price: product.price,
                 purchaseId: purchase.identifiers[0].id,
                 quantity: product.quantity,
-                index: 1, // TODO
+                index: idx
               })
               .execute();
           } else if (product.name) {
@@ -172,7 +271,7 @@ export class DescartService {
                 price: product.price,
                 purchaseId: purchase.identifiers[0].id,
                 quantity: product.quantity,
-                index: 1, // TODO
+                index: idx
               })
               .execute();
           } else {
@@ -181,5 +280,21 @@ export class DescartService {
         }
       )
     );
+    let result = await this.purchaseRepository
+      .createQueryBuilder('purchase')
+      .leftJoinAndSelect('purchase.store', 'store')
+      .leftJoin('purchase.users', 'users', `users.id=${body.user_id}`)
+      .groupBy('purchase.id')
+      .select('purchase.id', 'purchase_id')
+      .addSelect('store.name', 'storeName')
+      .addSelect('purchase.price', 'price')
+      .addSelect('purchase.purchasedAt', 'purchaseDate')
+      .addSelect('purchase.numItems', 'items')
+      .addSelect('store.imageUrl', 'imageUrl')
+      .addSelect('COUNT(users.id)', 'favorite')
+      .where(`purchase.id=${purchase.identifiers[0].id}`)
+      .getRawOne();
+
+    return result;
   }
 }

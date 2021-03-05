@@ -5,10 +5,12 @@ import { Purchase } from '../entities/Purchase';
 import { Purchasecustomproduct } from '../entities/Purchasecustomproduct';
 import { Purchaseproduct } from '../entities/Purchaseproduct';
 import { Store } from '../entities/Store';
+import { User } from '../entities/User';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([
+      User,
       Purchase,
       Purchaseproduct,
       Product,
