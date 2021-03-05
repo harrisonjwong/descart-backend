@@ -58,6 +58,40 @@ Database repo is here - https://github.com/nickghughes/descart-db-data
 }
 ```
 
+---
+
+## Authorization info
+
+### How to get use authorization
+
+`POST localhost:3333/api/auth/login` with a body of `{"username": "Harrison", "password": "harrison@email"}`
+
+The username is your display name and the password is your email. If there's a matching record in the database, then it returns a jwt with your old record attached. If there isn't a matching record in the database, then it creates a row with your username and email and returns a jwt with that information.
+
+The jwt looks like:
+
+```
+{
+    "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkaXNwbGF5TmFtZSI6IkhhcnJpc29uIiwiZW1haWwiOiJoYXJyaXNvbkBlbWFpbCIsInVzZXJJZCI6MSwiaWF0IjoxNjE0ODkzMjg4LCJleHAiOjE2MTQ4OTM0MDh9.VcXx7kovsN0mPk6gUx2SOyyeVn5Y15TDvGmTSQeuve4"
+}
+```
+
+You can test your user creation by doing a `GET localhost:3333/api/auth/profile`.
+
+The `Authorization` header needs to be included, with a value of `Bearer TOKEN` where TOKEN is the `eyJhb...e4` value from the jwt above.
+
+### How to use this in a controller:
+
+Import `UseGuards` from `@nestjs/common`, and import the `JwtAuthGuard` class in the `/auth` folder.
+
+Annotate any controller function with `@UseGuards(JwtAuthGuard)`
+
+Add a `@Request() req` to the parameters of a controller function, then access the user id with `req.user.userId`.
+
+The result is that the controller function will require a valid token (will return `401 Unauthorized` otherwise) and you can access the user id from that token.
+
+Obviously, any request to a protected endpoint now needs an `Authorization` header as described above.
+
 <!---
 This project was generated using [Nx](https://nx.dev).
 

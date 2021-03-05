@@ -6,7 +6,10 @@ import {
   Param,
   Post,
   Query,
+  UseGuards,
+  Request,
 } from '@nestjs/common';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { Product } from '../entities/Product';
 import { Purchase } from '../entities/Purchase';
 import { Purchasecustomproduct } from '../entities/Purchasecustomproduct';
@@ -22,8 +25,24 @@ const moment = require("moment");
 export class DescartController {
   constructor(private descartService: DescartService) {}
 
+  @UseGuards(JwtAuthGuard)
+  @Get('/purchases')
+  async getPurchasesByUser(@Request() req,
+    @Query('search') search: string,
+    @Query('favorite') favorite: string,
+    @Query('sort') sort: string,
+    @Query('page_size') pageSize: string,
+    @Query('page') page: string
+  ) {
+    const userIdFromJwt = req.user.userId;
+    const p: Purchase[] = await this.descartService.findAllPurchasesByUserId(
+      userIdFromJwt, search, favorite, sort, pageSize, page
+    );
+    return p;
+  }
+
   @Get('/purchases/:userId')
-  async getPurchasesByUser(
+  async getPurchasesByUserId(
     @Param('userId') id: string,
     @Query('search') search: string,
     @Query('favorite') favorite: string,

@@ -7,7 +7,6 @@ import {
   Param,
   Query,
 } from '@nestjs/common';
-import { JwtAuthGuard } from 'libs/auth/src/lib/jwt-auth.guard';
 import { ProductService } from './product.service';
 
 export class ProductSearchDto {
