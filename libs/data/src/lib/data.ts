@@ -42,7 +42,6 @@ export interface FavoriteProduct {
   id: number;
   productId: number;
   userId: number;
-  active: boolean;
 }
 
 export interface Purchase {
