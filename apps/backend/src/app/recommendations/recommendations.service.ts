@@ -1,12 +1,16 @@
 import { Injectable } from '@nestjs/common';
+import { PersonalizeRuntime } from "aws-sdk";
 
 @Injectable()
 export class RecommendationsService {
   NUM_RECS: number;
   TOTAL_PRODUCTS: number;
+  private client: PersonalizeRuntime;
+
   constructor() {
     this.NUM_RECS = 100;
     this.TOTAL_PRODUCTS = 8000;
+    this.client = new PersonalizeRuntime();
   }
   getRecommendationProductIds(): number[] {
     const nums: Set<number> = new Set();
@@ -20,3 +24,6 @@ export class RecommendationsService {
     return [...Array(this.NUM_RECS).keys()];
   }
 }
+
+
+
