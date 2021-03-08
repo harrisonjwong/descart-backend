@@ -33,6 +33,9 @@ export class RecommendationsService {
     };
 
     const amazonResult = await axios.post('/recommendations', body);
+
+    // do some data transformation to turn the result from amazon into a list of number (product ids)
+
     return amazonResult;
   }
 
