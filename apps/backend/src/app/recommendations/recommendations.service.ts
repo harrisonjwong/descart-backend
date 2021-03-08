@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import axios from 'axios';
 
 @Injectable()
 export class RecommendationsService {
@@ -14,6 +15,25 @@ export class RecommendationsService {
       nums.add(Math.floor(Math.random() * this.TOTAL_PRODUCTS) + 1);
     }
     return [...nums];
+  }
+
+  async getRecommendationsFromAmazon() {
+    const body = {
+      campaignArn: 'hello',
+      context: {
+        string: 'string',
+      },
+      filterArm: 'string',
+      filterValues: {
+        string: 'string',
+      },
+      itemId: 'string',
+      numResults: 'number',
+      userId: 'number',
+    };
+
+    const amazonResult = await axios.post('/recommendations', body);
+    return amazonResult;
   }
 
   getRecommendationProductIdsTest(): number[] {
