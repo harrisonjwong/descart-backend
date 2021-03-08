@@ -1,5 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import axios from 'axios';
+import { AmazonItemRecommendationDto } from './dto/amazon.item.recommendation.dto';
+import { AmazonRecommendationsDto } from './dto/amazon.recommendations.dto';
 
 @Injectable()
 export class RecommendationsService {
@@ -17,7 +19,7 @@ export class RecommendationsService {
     return [...nums];
   }
 
-  async getRecommendationsFromAmazon() {
+  async getRecommendationsFromAmazon(): Promise<number[]> {
     const body = {
       campaignArn: 'hello',
       context: {
@@ -32,11 +34,22 @@ export class RecommendationsService {
       userId: 'number',
     };
 
-    const amazonResult = await axios.post('/recommendations', body);
+    const amazonResult: AmazonRecommendationsDto = await axios.post(
+      '/recommendations',
+      body
+    );
 
-    // do some data transformation to turn the result from amazon into a list of number (product ids)
+    // do some data transformation to turn the result from amazon into what we want
+    const recommendationsList: AmazonItemRecommendationDto[] =
+      amazonResult.itemList;
+    recommendationsList.sort((a, b) => a.score - b.score);
 
-    return amazonResult;
+    //potentially unsafe transformation since itemId is a string
+    const sortedItemIds: number[] = recommendationsList.map((item) =>
+      Number(item.itemId)
+    );
+
+    return sortedItemIds;
   }
 
   getRecommendationProductIdsTest(): number[] {
