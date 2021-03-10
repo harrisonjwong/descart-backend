@@ -13,9 +13,7 @@ export class RecommendationsService {
   constructor() {
     this.NUM_RECS = 100;
     this.client = new PersonalizeRuntime({
-      region: REGION,
-      accessKeyId: ACCESS_KEY,
-      secretAccessKey: SECRET_KEY});
+      region: REGION});
   }
 
   getRecommendationProductIds(userId: string): number[] {
