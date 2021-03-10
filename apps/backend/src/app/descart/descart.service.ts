@@ -181,22 +181,25 @@ export class DescartService {
     pageSize: string,
     page: string
   ): Promise<Product[]> {
-    let query = this.productRepository
-      .createQueryBuilder('product')
-      .leftJoinAndSelect('product.manufacturer', 'manufacturer')
-      .leftJoin('storeproduct', 'sp', 'sp.productId=product.id')
-      .leftJoin('product.users', 'users', `users.id=${userId}`)
-      .groupBy('product.id')
-      .select('product.id', 'id')
-      .addSelect('COUNT(sp.id)', 'numStores')
-      .addSelect('COUNT(users.id)', 'favorite')
-      .addSelect('product.name', 'productName')
-      .addSelect('manufacturer.name', 'manufacturerName')
-      .addSelect('product.imageUrl', 'imageUrl')
-      .offset(Number(page) * Number(pageSize))
-      .limit(Number(pageSize));
-    if (!(search && search.length != 0) && !(favorite == 'true')) {
-      const productIds: number[] = this.recommendationsService.getRecommendationProductIds();
+
+    let query = (
+      this.productRepository
+        .createQueryBuilder('product')
+        .leftJoinAndSelect('product.manufacturer', 'manufacturer')
+        .leftJoin('storeproduct', 'sp', 'sp.productId=product.id')
+        .leftJoin('product.users', 'users', `users.id=${userId}`)
+        .groupBy('product.id')
+        .select('product.id', 'id')
+        .addSelect('COUNT(sp.id)', 'numStores')
+        .addSelect('COUNT(users.id)', 'favorite')
+        .addSelect('product.name', 'productName')
+        .addSelect('manufacturer.name', 'manufacturerName')
+        .addSelect('product.imageUrl', 'imageUrl')
+        .offset(Number(page) * Number(pageSize))
+        .limit(Number(pageSize))
+    );
+    if (!(search && search.length != 0) && !(favorite == "true")) {
+      const productIds: number[] = this.recommendationsService.getRecommendationProductIds(userId);
       query = query.where('product.id IN (:...ids)', { ids: productIds });
     } else {
       if (search && search.length !== 0) {
