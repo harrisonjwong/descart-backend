@@ -180,7 +180,7 @@ export class DescartService {
         .limit(Number(pageSize))
     );
     if (!(search && search.length != 0) && !(favorite == "true")) {
-      const productIds: number[] = this.recommendationsService.getRecommendationProductIds();
+      const productIds: number[] = this.recommendationsService.getRecommendationProductIds(userId);
       query = query.where('product.id IN (:...ids)', { ids: productIds });
     } else {
       if (search && search.length !== 0) {
