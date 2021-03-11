@@ -174,32 +174,31 @@ export class DescartService {
     await this.userRepository.save(user);
   }
 
-  getDiscoverProductsByUserId(
+  async getDiscoverProductsByUserId(
     userId: string,
     search: string,
     favorite: string,
     pageSize: string,
     page: string
   ): Promise<Product[]> {
-
-    let query = (
-      this.productRepository
-        .createQueryBuilder('product')
-        .leftJoinAndSelect('product.manufacturer', 'manufacturer')
-        .leftJoin('storeproduct', 'sp', 'sp.productId=product.id')
-        .leftJoin('product.users', 'users', `users.id=${userId}`)
-        .groupBy('product.id')
-        .select('product.id', 'id')
-        .addSelect('COUNT(sp.id)', 'numStores')
-        .addSelect('COUNT(users.id)', 'favorite')
-        .addSelect('product.name', 'productName')
-        .addSelect('manufacturer.name', 'manufacturerName')
-        .addSelect('product.imageUrl', 'imageUrl')
-        .offset(Number(page) * Number(pageSize))
-        .limit(Number(pageSize))
-    );
-    if (!(search && search.length != 0) && !(favorite == "true")) {
-      const productIds: number[] = this.recommendationsService.getRecommendationProductIds(userId);
+    let query = this.productRepository
+      .createQueryBuilder('product')
+      .leftJoinAndSelect('product.manufacturer', 'manufacturer')
+      .leftJoin('storeproduct', 'sp', 'sp.productId=product.id')
+      .leftJoin('product.users', 'users', `users.id=${userId}`)
+      .groupBy('product.id')
+      .select('product.id', 'id')
+      .addSelect('COUNT(sp.id)', 'numStores')
+      .addSelect('COUNT(users.id)', 'favorite')
+      .addSelect('product.name', 'productName')
+      .addSelect('manufacturer.name', 'manufacturerName')
+      .addSelect('product.imageUrl', 'imageUrl')
+      .offset(Number(page) * Number(pageSize))
+      .limit(Number(pageSize));
+    if (!(search && search.length != 0) && !(favorite == 'true')) {
+      const productIds: number[] = await this.recommendationsService.getRecommendationProductIds(
+        userId
+      );
       query = query.where('product.id IN (:...ids)', { ids: productIds });
     } else {
       if (search && search.length !== 0) {
@@ -246,7 +245,13 @@ export class DescartService {
       .execute();
   }
 
+<<<<<<< HEAD
   async createPurchase(userId: number, body: CreatePurchaseDto): Promise<Purchase> {
+=======
+  async createPurchase(body: CreatePurchaseDto): Promise<Purchase> {
+    // send new purchase to AWS to train the model
+    this.recommendationsService.addPurchase();
+>>>>>>> Add promise to aws thing
     const today = new Date();
     let numItems = 0;
     body.products.map((product: ProductDto) => {
