@@ -37,12 +37,16 @@ export class DescartService {
     private recommendationsService: RecommendationsService
   ) {}
 
-  SORT_FIELDS = [
-    "purchaseDate",
-    "CONVERT(`price`, float)"
-  ]
+  SORT_FIELDS = ['purchaseDate', 'CONVERT(`price`, float)'];
 
-  findAllPurchasesByUserId(userId: string, search: string, favorite: string, sort: string, pageSize: string, page: string): Promise<Purchase[]> {
+  findAllPurchasesByUserId(
+    userId: string,
+    search: string,
+    favorite: string,
+    sort: string,
+    pageSize: string,
+    page: string
+  ): Promise<Purchase[]> {
     console.log(favorite, sort, search);
     let sortField = this.SORT_FIELDS[Math.floor(Number(sort) / 2)];
     let query = this.purchaseRepository
@@ -60,19 +64,22 @@ export class DescartService {
       .where('purchase.userId = :userId', { userId })
       .orderBy(sortField, Number(sort) % 2 == 0 ? 'DESC' : 'ASC')
       .offset(Number(pageSize) * Number(page))
-      .limit(Number(pageSize))
+      .limit(Number(pageSize));
 
     if (search && search.length !== 0) {
       query = query.where(`store.name like :name`, { name: `%${search}%` });
     }
-    if (favorite == "true") {
+    if (favorite == 'true') {
       query = query.innerJoin('purchase.users', 'user', `user.id = ${userId}`);
     }
 
     return query.getRawMany();
   }
 
-  getPurchaseProductsByPurchaseId(userId: string, purchaseId: string): Promise<Purchaseproduct[]> {
+  getPurchaseProductsByPurchaseId(
+    userId: string,
+    purchaseId: string
+  ): Promise<Purchaseproduct[]> {
     return this.purchaseproductRepository
       .createQueryBuilder('purchaseproduct')
       .leftJoinAndSelect('purchaseproduct.product', 'product')
@@ -90,8 +97,10 @@ export class DescartService {
       .where('purchaseproduct.purchase_id = :id', { id: purchaseId })
       .getRawMany();
   }
-  
-  getPurchaseCustomProductsByPurchaseId(purchaseId: string): Promise<Purchasecustomproduct[]> {
+
+  getPurchaseCustomProductsByPurchaseId(
+    purchaseId: string
+  ): Promise<Purchasecustomproduct[]> {
     return this.purchasecustomproductRepository
       .createQueryBuilder('purchasecustomproduct')
       .select('purchasecustomproduct.name', 'productName')
@@ -120,17 +129,23 @@ export class DescartService {
     let productId = body.product_id;
     let favorite = body.favorite;
 
-    let product = await this.productRepository
-      .findOne({id: productId})
+    let product = await this.productRepository.findOne({ id: productId });
 
-    let user = await this.userRepository
-      .findOne({id: userId}, { relations: ["products"] });
-      
-    if (!product || !user || user.products.some(p => p.id == productId) == (favorite == "true")) return;
-    
-    favorite == "true"
+    let user = await this.userRepository.findOne(
+      { id: userId },
+      { relations: ['products'] }
+    );
+
+    if (
+      !product ||
+      !user ||
+      user.products.some((p) => p.id == productId) == (favorite == 'true')
+    )
+      return;
+
+    favorite == 'true'
       ? user.products.push(product)
-      : user.products = user.products.filter(p => p.id != product.id);
+      : (user.products = user.products.filter((p) => p.id != product.id));
 
     await this.userRepository.save(user);
   }
@@ -140,57 +155,62 @@ export class DescartService {
     let purchaseId = body.purchase_id;
     let favorite = body.favorite;
 
-    let purchase = await this.purchaseRepository
-      .findOne({id: purchaseId})
+    let purchase = await this.purchaseRepository.findOne({ id: purchaseId });
 
-    let user = await this.userRepository
-      .findOne({id: userId}, { relations: ["purchases"] });
+    let user = await this.userRepository.findOne(
+      { id: userId },
+      { relations: ['purchases'] }
+    );
 
-    if (!purchase || !user || user.purchases.some(p => p.id == purchaseId) == (favorite == "true")) return;
-    
-    favorite == "true"
+    if (
+      !purchase ||
+      !user ||
+      user.purchases.some((p) => p.id == purchaseId) == (favorite == 'true')
+    )
+      return;
+
+    favorite == 'true'
       ? user.purchases.push(purchase)
-      : user.purchases = user.purchases.filter(p => p.id != purchase.id);
-  
+      : (user.purchases = user.purchases.filter((p) => p.id != purchase.id));
+
     await this.userRepository.save(user);
   }
 
-  getDiscoverProductsByUserId(
+  async getDiscoverProductsByUserId(
     userId: string,
     search: string,
     favorite: string,
     pageSize: string,
     page: string
   ): Promise<Product[]> {
-
-    let query = (
-      this.productRepository
-        .createQueryBuilder('product')
-        .leftJoinAndSelect('product.manufacturer', 'manufacturer')
-        .leftJoin('storeproduct', 'sp', 'sp.productId=product.id')
-        .leftJoin('product.users', 'users', `users.id=${userId}`)
-        .groupBy('product.id')
-        .select('product.id', 'id')
-        .addSelect('COUNT(sp.id)', 'numStores')
-        .addSelect('COUNT(users.id)', 'favorite')
-        .addSelect('product.name', 'productName')
-        .addSelect('manufacturer.name', 'manufacturerName')
-        .addSelect('product.imageUrl', 'imageUrl')
-        .offset(Number(page) * Number(pageSize))
-        .limit(Number(pageSize))
-    );
-    if (!(search && search.length != 0) && !(favorite == "true")) {
-      const productIds: number[] = this.recommendationsService.getRecommendationProductIds(userId);
+    let query = this.productRepository
+      .createQueryBuilder('product')
+      .leftJoinAndSelect('product.manufacturer', 'manufacturer')
+      .leftJoin('storeproduct', 'sp', 'sp.productId=product.id')
+      .leftJoin('product.users', 'users', `users.id=${userId}`)
+      .groupBy('product.id')
+      .select('product.id', 'id')
+      .addSelect('COUNT(sp.id)', 'numStores')
+      .addSelect('COUNT(users.id)', 'favorite')
+      .addSelect('product.name', 'productName')
+      .addSelect('manufacturer.name', 'manufacturerName')
+      .addSelect('product.imageUrl', 'imageUrl')
+      .offset(Number(page) * Number(pageSize))
+      .limit(Number(pageSize));
+    if (!(search && search.length != 0) && !(favorite == 'true')) {
+      const productIds: number[] = await this.recommendationsService.getRecommendationProductIds(
+        userId
+      );
       query = query.where('product.id IN (:...ids)', { ids: productIds });
     } else {
       if (search && search.length !== 0) {
         query = query.where(`product.name like :name`, { name: `%${search}%` });
       }
-      if (favorite == "true") {
+      if (favorite == 'true') {
         query = query.innerJoin('product.users', 'user', `user.id = ${userId}`);
       }
     }
-    
+
     return query.getRawMany();
   }
 
@@ -228,6 +248,8 @@ export class DescartService {
   }
 
   async createPurchase(body: CreatePurchaseDto): Promise<Purchase> {
+    // send new purchase to AWS to train the model
+    this.recommendationsService.addPurchase();
     const today = new Date();
     let numItems = 0;
     body.products.map((product: ProductDto) => {
@@ -258,7 +280,7 @@ export class DescartService {
                 price: product.price,
                 purchaseId: purchase.identifiers[0].id,
                 quantity: product.quantity,
-                index: idx
+                index: idx,
               })
               .execute();
           } else if (product.name) {
@@ -271,7 +293,7 @@ export class DescartService {
                 price: product.price,
                 purchaseId: purchase.identifiers[0].id,
                 quantity: product.quantity,
-                index: idx
+                index: idx,
               })
               .execute();
           } else {
