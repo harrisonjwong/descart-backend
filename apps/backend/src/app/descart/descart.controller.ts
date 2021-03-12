@@ -43,26 +43,6 @@ export class DescartController {
       pageSize,
       page
     );
-    return p;
-  }
-
-  @Get('/purchases/:userId')
-  async getPurchasesByUserId(
-    @Param('userId') id: string,
-    @Query('search') search: string,
-    @Query('favorite') favorite: string,
-    @Query('sort') sort: string,
-    @Query('page_size') pageSize: string,
-    @Query('page') page: string
-  ) {
-    const p: Purchase[] = await this.descartService.findAllPurchasesByUserId(
-      id,
-      search,
-      favorite,
-      sort,
-      pageSize,
-      page
-    );
     return p.map((purchase) => {
       purchase['purchaseDate'] = moment(purchase['purchaseDate']).format(
         'MM/DD/yyyy'
@@ -71,6 +51,7 @@ export class DescartController {
     });
   }
 
+  @UseGuards(JwtAuthGuard)
   @Get('/purchasepreview/:purchaseId')
   async getPurchaseProductByPurchaseId(@Param('purchaseId') id: string) {
     const purchaseProducts: Purchaseproduct[] = await this.descartService.getPurchaseProductsByPurchaseId(
@@ -89,22 +70,24 @@ export class DescartController {
     return toReturn;
   }
 
+  @UseGuards(JwtAuthGuard)
   @Get('/productpreview/:productId')
   async getProductPreviewByProductId(@Param('productId') id: string) {
     const p: Product[] = await this.descartService.getProductsByProductId(id);
     return p;
   }
 
-  @Get('/discover/:userId')
+  @UseGuards(JwtAuthGuard)
+  @Get('/discover')
   async getDiscoverProductsByUserId(
-    @Param('userId') userId: string,
+    @Request() req,
     @Query('search') search: string,
     @Query('favorite') favorite: string,
     @Query('page_size') pageSize: string,
     @Query('page') page: string
   ) {
     const p: Product[] = await this.descartService.getDiscoverProductsByUserId(
-      userId,
+      req.user.userId,
       search,
       favorite,
       pageSize,
@@ -123,25 +106,29 @@ export class DescartController {
     return await this.descartService.getSimilarProductNames(query);
   }
 
+  @UseGuards(JwtAuthGuard)
   @Delete('/purchase/:purchaseId')
   async deletePurchase(@Param('purchaseId') purchaseId: string) {
     return await this.descartService.deletePurchase(purchaseId);
   }
 
+  @UseGuards(JwtAuthGuard)
   @Post('/purchase')
-  async createPurchase(@Body() body: CreatePurchaseDto) {
-    const p: Purchase = await this.descartService.createPurchase(body);
-    p['purchaseDate'] = moment(p['purchaseDate']).format('MM/DD/yyyy');
+  async createPurchase(@Request() req, @Body() body: CreatePurchaseDto) {
+    const p: Purchase = await this.descartService.createPurchase(req.user.userId, body);
+    p["purchaseDate"] = moment(p["purchaseDate"]).format("MM/DD/yyyy");
     return p;
   }
 
+  @UseGuards(JwtAuthGuard)
   @Post('/favoriteproduct')
-  async favoriteProduct(@Body() body: FavoriteProductDto) {
-    return await this.descartService.addOrRemoveFavoriteProducts(body);
+  async favoriteProduct(@Request() req, @Body() body: FavoriteProductDto) {
+    return await this.descartService.addOrRemoveFavoriteProducts(req.user.userId, body);
   }
 
+  @UseGuards(JwtAuthGuard)
   @Post('/favoritepurchase')
-  async favoritePurchase(@Body() body: FavoritePurchaseDto) {
-    return await this.descartService.addOrRemoveFavoritePurchases(body);
+  async favoritePurchase(@Request() req, @Body() body: FavoritePurchaseDto) {
+    return await this.descartService.addOrRemoveFavoritePurchases(req.user.userId, body);
   }
 }
