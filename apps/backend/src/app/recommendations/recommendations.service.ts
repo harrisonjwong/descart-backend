@@ -4,7 +4,6 @@ import { PersonalizeRuntime } from 'aws-sdk';
 const REGION = 'us-east-2';
 const CAMPAIGN_ARN =
   'arn:aws:personalize:us-east-2:815160866095:campaign/descart-basic';
-// SET AWS_ACCESS_KEY_ID AND AWS_SECRET_ACCESS_KEY AS ENVIRONMENT VARIABLES
 
 @Injectable()
 export class RecommendationsService {
@@ -24,7 +23,7 @@ export class RecommendationsService {
       .getRecommendations(
         {
           campaignArn: CAMPAIGN_ARN,
-          userId: userId,
+          userId: userId.toString(),
           numResults: this.NUM_RECS,
         },
         (err, data) => {

@@ -245,13 +245,7 @@ export class DescartService {
       .execute();
   }
 
-<<<<<<< HEAD
   async createPurchase(userId: number, body: CreatePurchaseDto): Promise<Purchase> {
-=======
-  async createPurchase(body: CreatePurchaseDto): Promise<Purchase> {
-    // send new purchase to AWS to train the model
-    this.recommendationsService.addPurchase();
->>>>>>> Add promise to aws thing
     const today = new Date();
     let numItems = 0;
     body.products.map((product: ProductDto) => {
