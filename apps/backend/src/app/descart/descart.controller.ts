@@ -159,4 +159,16 @@ export class DescartController {
       body
     );
   }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('/shoppingcart/delete/:storeId')
+  async deleteItemsFromShoppingCartByStoreAndUser(
+    @Request() req,
+    @Param('storeId') storeId
+  ) {
+    return await this.descartService.deleteItemsFromShoppingCartByStoreAndUser(
+      req.user.userId,
+      storeId
+    );
+  }
 }

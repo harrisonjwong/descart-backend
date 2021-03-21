@@ -368,12 +368,50 @@ export class DescartService {
     await this.userRepository.save(user);
   }
 
-  async getShoppingCartForUser(userId: number): Promise<Storeproduct[]> {
-    return await this.userRepository
-      .createQueryBuilder('user')
-      .innerJoinAndSelect('user.storeproducts', 'storeproducts')
-      .select('storeproducts.id')
-      .where('user.id = :userId', { userId })
+  async getShoppingCartForUser(userId: number) {
+    let stores = await this.storeproductRepository
+      .createQueryBuilder('storeproduct')
+      .innerJoinAndSelect('storeproduct.users', 'users', `users.id = ${userId}`)
+      .innerJoinAndSelect('storeproduct.store', 'store')
+      .innerJoinAndSelect('storeproduct.product', 'product')
+      .groupBy('storeproduct.storeId')
+      .select('storeproduct.storeId', 'id')
+      .addSelect('store.name', 'name')
+      .addSelect('store.imageUrl', 'imageUrl')
+      .addSelect('COUNT(storeproduct.storeId)', 'numItems')
+      .addSelect('GROUP_CONCAT(product.id)', 'items')
       .getRawMany();
+
+    const result = await Promise.all(
+      stores.map(async (store) => {
+        const oldItems = store.items;
+        const ids = oldItems.split(',').map((id: string) => Number(id));
+
+        return this.productRepository
+          .createQueryBuilder('product')
+          .select('product.id', 'id')
+          .addSelect('product.name', 'name')
+          .addSelect('product.imageUrl', 'imageUrl')
+          .where('product.id IN (:...ids)', { ids })
+          .getRawMany()
+          .then((res) => ({ ...store, items: res }));
+      })
+    );
+    return result;
+  }
+
+  // NOT DONE
+  async deleteItemsFromShoppingCartByStoreAndUser(
+    userId: number,
+    storeId: number
+  ) {
+    let storeproducts: Storeproduct[] = await this.storeproductRepository
+      .createQueryBuilder('storeproduct')
+      .innerJoinAndSelect('storeproduct.users', 'users', `users.id = ${userId}`)
+      .where('storeproduct.store_id = :storeId', { storeId })
+      .getMany();
+
+    console.log(storeproducts);
+    return storeproducts;
   }
 }
