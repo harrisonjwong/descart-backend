@@ -1,22 +1,43 @@
 import { Injectable } from '@nestjs/common';
+import { PersonalizeRuntime } from 'aws-sdk';
+
+const REGION = 'us-east-2';
+const CAMPAIGN_ARN =
+  'arn:aws:personalize:us-east-2:815160866095:campaign/descart-basic';
 
 @Injectable()
 export class RecommendationsService {
   NUM_RECS: number;
-  TOTAL_PRODUCTS: number;
+  client: PersonalizeRuntime;
+
   constructor() {
     this.NUM_RECS = 100;
-    this.TOTAL_PRODUCTS = 8000;
-  }
-  getRecommendationProductIds(): number[] {
-    const nums: Set<number> = new Set();
-    while (nums.size <= this.NUM_RECS) {
-      nums.add(Math.floor(Math.random() * this.TOTAL_PRODUCTS) + 1);
-    }
-    return [...nums];
+    this.client = new PersonalizeRuntime({
+      region: REGION,
+    });
   }
 
-  getRecommendationProductIdsTest(): number[] {
-    return [...Array(this.NUM_RECS).keys()];
+  async getRecommendationProductIds(userId: string): Promise<number[]> {
+    const nums: Set<number> = new Set();
+    return this.client
+      .getRecommendations(
+        {
+          campaignArn: CAMPAIGN_ARN,
+          userId: userId.toString(),
+          numResults: this.NUM_RECS,
+        },
+        (err, data) => {
+          for (var i = 0; i < data.itemList.length; i++) {
+            nums.add(Number(data.itemList[i].itemId));
+          }
+        }
+      )
+      .promise()
+      .then(() => {
+        console.log([...nums]);
+        return [...nums];
+      });
   }
+
+  addPurchase() {}
 }

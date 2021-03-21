@@ -174,7 +174,7 @@ export class DescartService {
     await this.userRepository.save(user);
   }
 
-  getDiscoverProductsByUserId(
+  async getDiscoverProductsByUserId(
     userId: string,
     search: string,
     favorite: string,
@@ -196,7 +196,9 @@ export class DescartService {
       .offset(Number(page) * Number(pageSize))
       .limit(Number(pageSize));
     if (!(search && search.length != 0) && !(favorite == 'true')) {
-      const productIds: number[] = this.recommendationsService.getRecommendationProductIds();
+      const productIds: number[] = await this.recommendationsService.getRecommendationProductIds(
+        userId
+      );
       query = query.where('product.id IN (:...ids)', { ids: productIds });
     } else {
       if (search && search.length !== 0) {
