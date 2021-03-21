@@ -3,11 +3,13 @@ import {
   Entity,
   Index,
   JoinColumn,
+  ManyToMany,
   ManyToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { Store } from './Store';
 import { Product } from './Product';
+import { User } from '@backend/data';
 
 @Index('store_id', ['storeId'], {})
 @Index('product_id', ['productId'], {})
@@ -27,6 +29,9 @@ export class Storeproduct {
 
   @Column('text', { name: 'url', nullable: true })
   url: string | null;
+
+  @ManyToMany('User', 'storeproducts')
+  users: User[];
 
   @ManyToOne('Store', 'storeproducts', {
     onDelete: 'CASCADE',

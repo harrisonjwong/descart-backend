@@ -19,6 +19,7 @@ import { CreatePurchaseDto } from './dto/createpurchase.dto';
 import { FavoriteProductDto } from './dto/favoriteproduct.dto';
 import { FavoritePurchaseDto } from './dto/favoritepurchase.dto';
 import * as moment from 'moment';
+import { ShoppingCartItemDto } from './dto/shoppingcartitem.dto';
 
 @Controller('descart')
 export class DescartController {
@@ -115,20 +116,47 @@ export class DescartController {
   @UseGuards(JwtAuthGuard)
   @Post('/purchase')
   async createPurchase(@Request() req, @Body() body: CreatePurchaseDto) {
-    const p: Purchase = await this.descartService.createPurchase(req.user.userId, body);
-    p["purchaseDate"] = moment(p["purchaseDate"]).format("MM/DD/yyyy");
+    const p: Purchase = await this.descartService.createPurchase(
+      req.user.userId,
+      body
+    );
+    p['purchaseDate'] = moment(p['purchaseDate']).format('MM/DD/yyyy');
     return p;
   }
 
   @UseGuards(JwtAuthGuard)
   @Post('/favoriteproduct')
   async favoriteProduct(@Request() req, @Body() body: FavoriteProductDto) {
-    return await this.descartService.addOrRemoveFavoriteProducts(req.user.userId, body);
+    return await this.descartService.addOrRemoveFavoriteProducts(
+      req.user.userId,
+      body
+    );
   }
 
   @UseGuards(JwtAuthGuard)
   @Post('/favoritepurchase')
   async favoritePurchase(@Request() req, @Body() body: FavoritePurchaseDto) {
-    return await this.descartService.addOrRemoveFavoritePurchases(req.user.userId, body);
+    return await this.descartService.addOrRemoveFavoritePurchases(
+      req.user.userId,
+      body
+    );
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('/shoppingcart')
+  async getShoppingCartForUser(@Request() req) {
+    return await this.descartService.getShoppingCartForUser(req.user.userId);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('/shoppingcart')
+  async addOrRemoveShoppingCartItem(
+    @Request() req,
+    @Body() body: ShoppingCartItemDto
+  ) {
+    return await this.descartService.addOrRemoveShoppingCartItem(
+      req.user.userId,
+      body
+    );
   }
 }

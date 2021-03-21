@@ -15,6 +15,8 @@ import { FavoriteProductDto } from './dto/favoriteproduct.dto';
 import { FavoritePurchaseDto } from './dto/favoritepurchase.dto';
 import { Purchasecustomproduct } from '../entities/Purchasecustomproduct';
 import { ProductDto } from './dto/product.dto';
+import { ShoppingCartItemDto } from './dto/shoppingcartitem.dto';
+import { Storeproduct } from '../entities/Storeproduct';
 
 // TODO - fix return types (I am returning promises of the entities but they no longer match the entities)
 
@@ -34,6 +36,8 @@ export class DescartService {
     private storeRepository: Repository<Store>,
     @InjectRepository(Purchasecustomproduct)
     private purchasecustomproductRepository: Repository<Purchasecustomproduct>,
+    @InjectRepository(Storeproduct)
+    private storeproductRepository: Repository<Storeproduct>,
     private recommendationsService: RecommendationsService
   ) {}
 
@@ -124,7 +128,10 @@ export class DescartService {
       .getRawMany();
   }
 
-  async addOrRemoveFavoriteProducts(userId: number, body: FavoriteProductDto): Promise<void> {
+  async addOrRemoveFavoriteProducts(
+    userId: number,
+    body: FavoriteProductDto
+  ): Promise<void> {
     let productId = body.product_id;
     let favorite = body.favorite;
 
@@ -149,7 +156,10 @@ export class DescartService {
     await this.userRepository.save(user);
   }
 
-  async addOrRemoveFavoritePurchases(userId: number, body: FavoritePurchaseDto): Promise<void> {
+  async addOrRemoveFavoritePurchases(
+    userId: number,
+    body: FavoritePurchaseDto
+  ): Promise<void> {
     let purchaseId = body.purchase_id;
     let favorite = body.favorite;
 
@@ -245,7 +255,10 @@ export class DescartService {
       .execute();
   }
 
-  async createPurchase(userId: number, body: CreatePurchaseDto): Promise<Purchase> {
+  async createPurchase(
+    userId: number,
+    body: CreatePurchaseDto
+  ): Promise<Purchase> {
     const today = new Date();
     let numItems = 0;
     body.products.map((product: ProductDto) => {
@@ -315,5 +328,48 @@ export class DescartService {
       .getRawOne();
 
     return result;
+  }
+
+  async addOrRemoveShoppingCartItem(
+    userId: number,
+    body: ShoppingCartItemDto
+  ): Promise<void> {
+    let storeproductId = body.storeproduct_id;
+    let addItem = body.add_item;
+
+    let storeproduct = await this.storeproductRepository.findOne({
+      id: storeproductId,
+    });
+
+    let user = await this.userRepository.findOne(
+      { id: userId },
+      { relations: ['storeproducts'] }
+    );
+
+    if (
+      !storeproduct ||
+      !user ||
+      user.storeproducts.some((p) => p.id === storeproductId) ===
+        (addItem === 'true')
+    ) {
+      return;
+    }
+
+    addItem == 'true'
+      ? user.storeproducts.push(storeproduct)
+      : (user.storeproducts = user.storeproducts.filter(
+          (p) => p.id !== storeproduct.id
+        ));
+
+    await this.userRepository.save(user);
+  }
+
+  async getShoppingCartForUser(userId: number): Promise<Storeproduct[]> {
+    return await this.userRepository
+      .createQueryBuilder('user')
+      .innerJoinAndSelect('user.storeproducts', 'storeproducts')
+      .select('storeproducts.id')
+      .where('user.id = :userId', { userId })
+      .getRawMany();
   }
 }

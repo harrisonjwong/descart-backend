@@ -9,6 +9,7 @@ import {
 } from 'typeorm';
 import { Product } from './Product';
 import { Purchase } from './Purchase';
+import { Storeproduct } from './Storeproduct';
 
 @Index('user_id_UNIQUE', ['id'], { unique: true })
 @Index('email_UNIQUE', ['email'], { unique: true })
@@ -37,4 +38,15 @@ export class User {
 
   @OneToMany('Purchase', 'user')
   purchases2: Purchase[];
+
+  @ManyToMany('Storeproduct', 'users')
+  @JoinTable({
+    name: 'shoppingcartitem',
+    joinColumns: [{ name: 'user_id', referencedColumnName: 'id' }],
+    inverseJoinColumns: [
+      { name: 'storeproduct_id', referencedColumnName: 'id' },
+    ],
+    schema: 'descart',
+  })
+  storeproducts: Storeproduct[];
 }
