@@ -248,10 +248,12 @@ export class DescartService {
   async createPurchase(userId: number, body: CreatePurchaseDto): Promise<Purchase> {
     const today = new Date();
     let numItems = 0;
+    const itemIds: Set<number> = new Set();
     body.products.map((product: ProductDto) => {
       numItems += product.quantity;
+      itemIds.add(product.id)
     });
-    console.log(body.products);
+    this.recommendationsService.addPurchase(userId.toString(), [...itemIds], today.getTime());
     const purchase = await this.purchaseRepository
       .createQueryBuilder('purchase')
       .insert()
