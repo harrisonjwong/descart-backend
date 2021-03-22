@@ -10,4 +10,6 @@ export class CreatePurchaseDto {
 
   @IsNotEmpty()
   products: ProductDto[];
+
+  clear_cart?: boolean;
 }
