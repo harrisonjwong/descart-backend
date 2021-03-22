@@ -51,7 +51,6 @@ export class DescartService {
     pageSize: string,
     page: string
   ): Promise<Purchase[]> {
-    console.log(favorite, sort, search);
     let sortField = this.SORT_FIELDS[Math.floor(Number(sort) / 2)];
     let query = this.purchaseRepository
       .createQueryBuilder('purchase')
@@ -116,7 +115,6 @@ export class DescartService {
   }
 
   getProductsByProductId(userId: string, productId: string): Promise<Product[]> {
-    console.log(userId, productId)
     return this.productRepository
       .createQueryBuilder('product')
       .innerJoinAndSelect('product.storeproducts', 'storeproducts')
@@ -273,7 +271,9 @@ export class DescartService {
         itemIds.add(product.id)
       }
     });
+
     this.recommendationsService.addPurchase(userId.toString(), [...itemIds], today.getTime());
+    
     const purchase = await this.purchaseRepository
       .createQueryBuilder('purchase')
       .insert()
@@ -422,7 +422,6 @@ export class DescartService {
       { relations: ['storeproducts'] }
     );
     user.storeproducts = user.storeproducts.filter((sp) => sp.storeId !== storeId);
-      console.log(user.storeproducts);
     await this.userRepository.save(user);
   }
 
