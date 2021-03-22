@@ -161,7 +161,7 @@ export class DescartController {
   }
 
   @UseGuards(JwtAuthGuard)
-  @Get('/shoppingcart/delete/:storeId')
+  @Delete('/shoppingcart/delete/:storeId')
   async deleteItemsFromShoppingCartByStoreAndUser(
     @Request() req,
     @Param('storeId') storeId

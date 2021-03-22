@@ -333,7 +333,7 @@ export class DescartService {
   async addOrRemoveShoppingCartItem(
     userId: number,
     body: ShoppingCartItemDto
-  ): Promise<void> {
+  ): Promise<object> {
     let storeproductId = body.storeproduct_id;
     let addItem = body.add_item;
 
@@ -352,7 +352,10 @@ export class DescartService {
       user.storeproducts.some((p) => p.id === storeproductId) ===
         (addItem === 'true')
     ) {
-      return;
+      return Promise.resolve({
+        storeproduct: storeproductId,
+        result: 'cannot add or remove this',
+      });
     }
 
     addItem == 'true'
@@ -362,6 +365,7 @@ export class DescartService {
         ));
 
     await this.userRepository.save(user);
+    return Promise.resolve({ storeproduct: storeproductId, adding: addItem });
   }
 
   async getShoppingCartForUser(userId: number) {
@@ -396,18 +400,29 @@ export class DescartService {
     return result;
   }
 
-  // NOT DONE
   async deleteItemsFromShoppingCartByStoreAndUser(
     userId: number,
     storeId: number
-  ) {
-    let storeproducts: Storeproduct[] = await this.storeproductRepository
+  ): Promise<object> {
+    let user = await this.userRepository.findOne(
+      { id: userId },
+      { relations: ['storeproducts'] }
+    );
+
+    const storeproductsToDelete = await this.storeproductRepository
       .createQueryBuilder('storeproduct')
       .innerJoinAndSelect('storeproduct.users', 'users', `users.id = ${userId}`)
       .where('storeproduct.store_id = :storeId', { storeId })
-      .getMany();
+      .getRawMany();
+    const storeproductIdsToDelete = storeproductsToDelete.map(
+      (sp) => sp.storeproduct_id
+    );
 
-    console.log(storeproducts);
-    return storeproducts;
+    user.storeproducts = user.storeproducts.filter(
+      (p) => !storeproductIdsToDelete.includes(p.id)
+    );
+
+    await this.userRepository.save(user);
+    return Promise.resolve({ deleted: storeproductIdsToDelete });
   }
 }
