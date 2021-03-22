@@ -34,7 +34,6 @@ export class RecommendationsService {
       )
       .promise()
       .then(() => {
-        console.log([...nums]);
         return [...nums];
       });
   }
