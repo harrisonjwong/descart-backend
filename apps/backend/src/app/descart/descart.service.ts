@@ -115,15 +115,20 @@ export class DescartService {
       .getRawMany();
   }
 
-  getProductsByProductId(productId: string): Promise<Product[]> {
+  getProductsByProductId(userId: string, productId: string): Promise<Product[]> {
+    console.log(userId, productId)
     return this.productRepository
       .createQueryBuilder('product')
       .innerJoinAndSelect('product.storeproducts', 'storeproducts')
       .innerJoinAndSelect('storeproducts.store', 'store')
+      .leftJoin('storeproducts.users', 'users', `users.id=${userId}`)
+      .groupBy('storeproducts.id')
       .select('store.name', 'store_name')
+      .addSelect('storeproducts.id', 'sp_id')
       .addSelect('storeproducts.url', 'url')
       .addSelect('storeproducts.price', 'price')
       .addSelect('store.imageUrl', 'image_url')
+      .addSelect('COUNT(users.id)', 'in_cart')
       .where('product.id = :id', { id: productId })
       .getRawMany();
   }
@@ -377,13 +382,12 @@ export class DescartService {
       .createQueryBuilder('storeproduct')
       .innerJoinAndSelect('storeproduct.users', 'users', `users.id = ${userId}`)
       .innerJoinAndSelect('storeproduct.store', 'store')
-      .innerJoinAndSelect('storeproduct.product', 'product')
       .groupBy('storeproduct.storeId')
       .select('storeproduct.storeId', 'id')
       .addSelect('store.name', 'name')
       .addSelect('store.imageUrl', 'imageUrl')
       .addSelect('COUNT(storeproduct.storeId)', 'numItems')
-      .addSelect('GROUP_CONCAT(product.id)', 'items')
+      .addSelect('GROUP_CONCAT(storeproduct.id)', 'items')
       .getRawMany();
 
     const result = await Promise.all(
@@ -391,17 +395,35 @@ export class DescartService {
         const oldItems = store.items;
         const ids = oldItems.split(',').map((id: string) => Number(id));
 
-        return this.productRepository
-          .createQueryBuilder('product')
-          .select('product.id', 'id')
+        return this.storeproductRepository
+          .createQueryBuilder('storeproduct')
+          .innerJoinAndSelect('storeproduct.product', 'product')
+          .leftJoinAndSelect('product.users', 'users', `users.id = ${userId}`)
+          .groupBy('storeproduct.id')
+          .select('storeproduct.id', 'sp_id')
+          .addSelect('product.id', 'id')
           .addSelect('product.name', 'name')
           .addSelect('product.imageUrl', 'imageUrl')
-          .where('product.id IN (:...ids)', { ids })
+          .where('storeproduct.id IN (:...ids)', { ids })
+          .addSelect('COUNT(users.id)', 'favorite')
           .getRawMany()
-          .then((res) => ({ ...store, items: res }));
+          .then((res) => ({ ...store, items: res.map((el) => {
+            el['favorite'] = el['favorite'] !== "0";
+            return el;
+          })}));
       })
     );
     return result;
+  }
+
+  async clearCartFor(userId: number, storeId: number) {
+    let user = await this.userRepository.findOne(
+      { id: userId },
+      { relations: ['storeproducts'] }
+    );
+    user.storeproducts = user.storeproducts.filter((sp) => sp.storeId !== storeId);
+      console.log(user.storeproducts);
+    await this.userRepository.save(user);
   }
 
   async deleteItemsFromShoppingCartByStoreAndUser(
