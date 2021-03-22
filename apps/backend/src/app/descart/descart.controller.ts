@@ -66,7 +66,6 @@ export class DescartController {
       .concat(purchaseProducts)
       .concat(purchaseCustomProducts)
       .sort((a, b) => a['index'] - b['index']);
-    console.log(purchaseProducts, purchaseCustomProducts, toReturn);
 
     return toReturn;
   }
@@ -119,7 +118,6 @@ export class DescartController {
   @UseGuards(JwtAuthGuard)
   @Post('/purchase')
   async createPurchase(@Request() req, @Body() body: CreatePurchaseDto) {
-    console.log(body);
     const p: Purchase = await this.descartService.createPurchase(
       req.user.userId,
       body
