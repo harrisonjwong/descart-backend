@@ -251,7 +251,9 @@ export class DescartService {
     const itemIds: Set<number> = new Set();
     body.products.map((product: ProductDto) => {
       numItems += product.quantity;
-      itemIds.add(product.id)
+      if (product.id) {
+        itemIds.add(product.id)
+      }
     });
     this.recommendationsService.addPurchase(userId.toString(), [...itemIds], today.getTime());
     const purchase = await this.purchaseRepository
