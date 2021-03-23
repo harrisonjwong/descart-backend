@@ -10,6 +10,24 @@ The project will be available at `localhost:3333`
 
 There is probably some way to make a production build but I still need to figure that out.
 
+Configure the database credentials in `app.module.ts` or by using a `.env` file.
+
+To use a `.env` file:
+
+Create a file called `.env` it in the root dir of this repo and paste this into it:
+
+```
+# Recommendations:
+AWS_ACCESS_KEY=see discord
+AWS_SECRET_ACCESS_KEY=see discord
+
+# Fill in your credentials here
+DB_HOST=localhost
+DB_USERNAME=root
+DB_PASSWORD=password
+DB_PORT=3306
+```
+
 Frontend repo is here - https://github.com/nickghughes/descart
 
 Database repo is here - https://github.com/nickghughes/descart-db-data
