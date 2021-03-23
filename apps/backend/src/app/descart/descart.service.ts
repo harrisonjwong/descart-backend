@@ -114,7 +114,10 @@ export class DescartService {
       .getRawMany();
   }
 
-  getProductsByProductId(userId: string, productId: string): Promise<Product[]> {
+  getProductsByProductId(
+    userId: string,
+    productId: string
+  ): Promise<Product[]> {
     return this.productRepository
       .createQueryBuilder('product')
       .innerJoinAndSelect('product.storeproducts', 'storeproducts')
@@ -268,12 +271,16 @@ export class DescartService {
     body.products.map((product: ProductDto) => {
       numItems += product.quantity;
       if (product.id) {
-        itemIds.add(product.id)
+        itemIds.add(product.id);
       }
     });
 
-    this.recommendationsService.addPurchase(userId.toString(), [...itemIds], today.getTime());
-    
+    this.recommendationsService.addPurchase(
+      userId.toString(),
+      [...itemIds],
+      today.getTime()
+    );
+
     const purchase = await this.purchaseRepository
       .createQueryBuilder('purchase')
       .insert()
@@ -407,10 +414,13 @@ export class DescartService {
           .where('storeproduct.id IN (:...ids)', { ids })
           .addSelect('COUNT(users.id)', 'favorite')
           .getRawMany()
-          .then((res) => ({ ...store, items: res.map((el) => {
-            el['favorite'] = el['favorite'] !== "0";
-            return el;
-          })}));
+          .then((res) => ({
+            ...store,
+            items: res.map((el) => {
+              el['favorite'] = el['favorite'] !== '0';
+              return el;
+            }),
+          }));
       })
     );
     return result;
@@ -421,7 +431,9 @@ export class DescartService {
       { id: userId },
       { relations: ['storeproducts'] }
     );
-    user.storeproducts = user.storeproducts.filter((sp) => sp.storeId !== storeId);
+    user.storeproducts = user.storeproducts.filter(
+      (sp) => sp.storeId !== storeId
+    );
     await this.userRepository.save(user);
   }
 
