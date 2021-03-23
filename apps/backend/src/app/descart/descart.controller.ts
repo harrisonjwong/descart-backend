@@ -72,10 +72,16 @@ export class DescartController {
 
   @UseGuards(JwtAuthGuard)
   @Get('/productpreview/:productId')
-  async getProductPreviewByProductId(@Request() req, @Param('productId') id: string) {
-    const p: Product[] = await this.descartService.getProductsByProductId(req.user.userId, id);
+  async getProductPreviewByProductId(
+    @Request() req,
+    @Param('productId') id: string
+  ) {
+    const p: Product[] = await this.descartService.getProductsByProductId(
+      req.user.userId,
+      id
+    );
     return p.map((el) => {
-      el['in_cart'] = el['in_cart'] !== "0";
+      el['in_cart'] = el['in_cart'] !== '0';
       return el;
     });
   }
@@ -122,7 +128,8 @@ export class DescartController {
       req.user.userId,
       body
     );
-    if (body.clear_cart) await this.descartService.clearCartFor(req.user.userId, body.store_id);
+    if (body.clear_cart)
+      await this.descartService.clearCartFor(req.user.userId, body.store_id);
     p['purchaseDate'] = moment(p['purchaseDate']).format('MM/DD/yyyy');
     return p;
   }
