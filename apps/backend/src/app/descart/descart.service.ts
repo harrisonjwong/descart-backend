@@ -10,6 +10,7 @@ import { User } from '../entities/User';
 
 import { RecommendationsService } from '../recommendations/recommendations.service';
 import { Store } from '../entities/Store';
+import { Category } from '../entities/Category';
 import { CreatePurchaseDto } from './dto/createpurchase.dto';
 import { FavoriteProductDto } from './dto/favoriteproduct.dto';
 import { FavoritePurchaseDto } from './dto/favoritepurchase.dto';
@@ -38,6 +39,8 @@ export class DescartService {
     private purchasecustomproductRepository: Repository<Purchasecustomproduct>,
     @InjectRepository(Storeproduct)
     private storeproductRepository: Repository<Storeproduct>,
+    @InjectRepository(Category)
+    private categoryRepository: Repository<Category>,
     private recommendationsService: RecommendationsService
   ) {}
 
@@ -255,6 +258,14 @@ export class DescartService {
       .addSelect('product.imageUrl', 'imageUrl')
       .where(`product.name like :name`, { name: `%${name}%` })
       .limit(5)
+      .getRawMany();
+  }
+
+  getCategories(): Promise<Category[]> {
+    return this.categoryRepository
+      .createQueryBuilder('category')
+      .select('category.id', 'id')
+      .addSelect('category.name', 'name')
       .getRawMany();
   }
 

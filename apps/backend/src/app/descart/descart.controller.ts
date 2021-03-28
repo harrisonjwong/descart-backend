@@ -117,6 +117,11 @@ export class DescartController {
     return await this.descartService.getSimilarProductNames(query);
   }
 
+  @Get('/categories')
+  async getCategories() {
+    return await this.descartService.getCategories();
+  }
+
   @UseGuards(JwtAuthGuard)
   @Delete('/purchase/:purchaseId')
   async deletePurchase(@Param('purchaseId') purchaseId: string) {
