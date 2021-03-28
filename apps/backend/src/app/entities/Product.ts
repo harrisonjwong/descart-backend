@@ -9,6 +9,7 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { User } from './User';
+import { Category } from './Category';
 import { Manufacturer } from './Manufacturer';
 import { Purchaseproduct } from './Purchaseproduct';
 import { Storeproduct } from './Storeproduct';
@@ -29,6 +30,9 @@ export class Product {
   @Column('int', { name: 'manufacturer_id', nullable: true })
   manufacturerId: number | null;
 
+  @Column('int', { name: 'category_id', nullable: true })
+  categoryId: number | null;
+
   @ManyToMany('User', 'products')
   users: User[];
 
@@ -38,6 +42,13 @@ export class Product {
   })
   @JoinColumn([{ name: 'manufacturer_id', referencedColumnName: 'id' }])
   manufacturer: Manufacturer;
+
+  @ManyToOne('Category', 'products', {
+    onDelete: 'NO ACTION',
+    onUpdate: 'NO ACTION',
+  })
+  @JoinColumn([{ name: 'category_id', referencedColumnName: 'id' }])
+  category: Category;
 
   @OneToMany('Purchaseproduct', 'product')
   purchaseproducts: Purchaseproduct[];

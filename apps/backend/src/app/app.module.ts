@@ -7,6 +7,7 @@ import { AuthController } from './auth/auth.controller';
 import { AuthModule } from './auth/auth.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Manufacturer } from './entities/Manufacturer';
+import { Category } from './entities/Category';
 import { Product } from './entities/Product';
 import { Purchase } from './entities/Purchase';
 import { Purchasecustomproduct } from './entities/Purchasecustomproduct';
@@ -30,6 +31,7 @@ require('dotenv').config();
       database: 'descart',
       entities: [
         Manufacturer,
+        Category,
         Product,
         Purchase,
         Purchasecustomproduct,

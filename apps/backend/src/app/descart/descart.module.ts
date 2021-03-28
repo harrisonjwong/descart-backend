@@ -7,6 +7,7 @@ import { Purchaseproduct } from '../entities/Purchaseproduct';
 import { Store } from '../entities/Store';
 import { Storeproduct } from '../entities/Storeproduct';
 import { User } from '../entities/User';
+import { Category } from '../entities/Category';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { User } from '../entities/User';
       Store,
       Purchasecustomproduct,
       Storeproduct,
+      Category,
     ]),
   ],
   exports: [TypeOrmModule],
