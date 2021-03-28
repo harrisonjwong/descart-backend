@@ -192,11 +192,13 @@ export class DescartService {
     search: string,
     favorite: string,
     pageSize: string,
-    page: string
+    page: string,
+    catIds: string[]
   ): Promise<Product[]> {
     let query = this.productRepository
       .createQueryBuilder('product')
       .leftJoinAndSelect('product.manufacturer', 'manufacturer')
+      .leftJoinAndSelect('product.category', 'category')
       .leftJoin('storeproduct', 'sp', 'sp.productId=product.id')
       .leftJoin('product.users', 'users', `users.id=${userId}`)
       .groupBy('product.id')
@@ -205,10 +207,11 @@ export class DescartService {
       .addSelect('COUNT(users.id)', 'favorite')
       .addSelect('product.name', 'productName')
       .addSelect('manufacturer.name', 'manufacturerName')
+      .addSelect('category.name', 'categoryName')
       .addSelect('product.imageUrl', 'imageUrl')
       .offset(Number(page) * Number(pageSize))
       .limit(Number(pageSize));
-    if (!(search && search.length != 0) && !(favorite == 'true')) {
+    if (!(search && search.length != 0) && !(favorite == 'true') && !(catIds && catIds.length > 0)) {
       const productIds: number[] = await this.recommendationsService.getRecommendationProductIds(
         userId
       );
@@ -219,6 +222,9 @@ export class DescartService {
       }
       if (favorite == 'true') {
         query = query.innerJoin('product.users', 'user', `user.id = ${userId}`);
+      }
+      if (catIds && catIds.length > 0) {
+        query = query.where('category.id IN (:...ids)', { ids: catIds });
       }
     }
 

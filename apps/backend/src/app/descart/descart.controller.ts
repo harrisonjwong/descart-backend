@@ -87,14 +87,16 @@ export class DescartController {
     @Query('search') search: string,
     @Query('favorite') favorite: string,
     @Query('page_size') pageSize: string,
-    @Query('page') page: string
+    @Query('page') page: string,
+    @Query('cat_id') catIds: string[]
   ) {
     const p: Product[] = await this.descartService.getDiscoverProductsByUserId(
       req.user.userId,
       search,
       favorite,
       pageSize,
-      page
+      page,
+      catIds
     );
     return p;
   }
